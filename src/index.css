@@ -7,6 +7,7 @@
 
 @layer base {
   :root {
+    /* Apple-inspired dark theme */
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
     --card: 240 10% 3.9%;
@@ -26,7 +27,7 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
-    --radius: 0.5rem;
+    --radius: 0.75rem;
     --sidebar-background: 240 10% 3.9%;
     --sidebar-foreground: 240 5% 64.9%;
     --sidebar-primary: 263.4 70% 86.7%;
@@ -51,34 +52,123 @@
   html {
     @apply scroll-smooth;
   }
+  
+  /* Improved scrollbars for Apple theme */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-eduAccent/30 rounded-full hover:bg-eduAccent/50 transition-colors;
+  }
 }
 
-@layer utilities {
+@layer components {
+  /* Card styling with Apple-like glass morphism */
+  .chapter-card {
+    @apply relative rounded-lg backdrop-blur-md bg-white/5 border border-white/10 shadow-lg transition-all duration-300;
+  }
+
+  .chapter-card:hover {
+    @apply shadow-xl bg-white/10 border-eduAccent/30;
+  }
+  
+  /* Overlay for modals with Apple-like blur */
+  .overlay {
+    @apply fixed inset-0 z-50 bg-black/70 backdrop-blur-sm animate-fade-in overflow-y-auto;
+  }
+
+  .overlay.closing {
+    @apply animate-fade-out;
+  }
+  
+  /* Content editing area */
+  .content-area {
+    @apply p-5 rounded-lg bg-secondary/60 text-eduLight font-sans min-h-[200px] focus:outline-none resize-none;
+  }
+  
+  /* Apple-inspired button */
+  .apple-button {
+    @apply rounded-full py-2 px-4 font-medium transition-all duration-200
+           bg-gradient-to-b from-eduAccent/90 to-eduAccent/70
+           hover:from-eduAccent to-eduAccent/80
+           active:scale-95 shadow-md hover:shadow-lg;
+  }
+  
+  /* Glass panel */
   .glass {
     @apply backdrop-blur-md bg-white/5 border border-white/10 shadow-lg;
   }
-  
+}
+
+@layer utilities {
+  /* Text balance for better typography */
   .text-balance {
     text-wrap: balance;
   }
+  
+  /* Smooth animations */
+  .animate-smooth {
+    @apply transition-all duration-300 ease-in-out;
+  }
+  
+  /* Apple-inspired gradients */
+  .apple-gradient {
+    @apply bg-gradient-to-br from-eduHighlight/80 via-eduAccent/60 to-eduAccent/40;
+  }
+  
+  /* Responsive padding utility */
+  .responsive-padding {
+    @apply px-3 sm:px-4 md:px-6 py-3 sm:py-4;
+  }
 }
 
-.chapter-card {
-  @apply relative p-6 rounded-lg glass transition-all duration-300;
+/* Monaco Editor Overrides */
+.monaco-editor .margin,
+.monaco-editor-background,
+.monaco-editor .inputarea.ime-input {
+  background-color: rgba(32, 33, 36, 0.8) !important;
 }
 
-.chapter-card:hover {
-  @apply shadow-xl transform -translate-y-1 bg-white/10;
+/* PrismJS Theme Overrides */
+code[class*="language-"],
+pre[class*="language-"] {
+  @apply text-sm sm:text-base leading-relaxed;
 }
 
-.overlay {
-  @apply fixed inset-0 z-50 bg-black/70 backdrop-blur-sm animate-fade-in overflow-y-auto;
+pre[class*="language-"] {
+  @apply rounded-lg border border-white/10;
 }
 
-.overlay.closing {
-  @apply animate-fade-out;
+/* Responsive Design for Mobile */
+@media (max-width: 640px) {
+  .chapter-card {
+    @apply p-4;
+  }
+  
+  h1 {
+    @apply text-2xl;
+  }
+  
+  h2 {
+    @apply text-xl;
+  }
 }
 
-.content-area {
-  @apply p-5 rounded-lg bg-secondary/60 text-eduLight font-sans min-h-[200px] focus:outline-none resize-none;
+/* Animation keyframes */
+@keyframes pulse-light {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.pulse-animation {
+  animation: pulse-light 2s infinite ease-in-out;
 }

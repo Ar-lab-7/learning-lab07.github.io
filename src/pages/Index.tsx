@@ -7,7 +7,8 @@ import BlogCreator from '@/components/BlogCreator';
 import ChatOverlay from '@/components/ChatOverlay';
 import BlogViewer from '@/components/BlogViewer';
 import QuestionPaperGenerator from '@/components/QuestionPaperGenerator';
-import { PlusCircle, MessageCircle, BookOpen, FileText } from 'lucide-react';
+import SettingsDialog from '@/components/SettingsDialog';
+import { PlusCircle, MessageCircle, BookOpen, FileText, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDeviceType } from '@/hooks/use-mobile';
 
@@ -15,16 +16,21 @@ import { useDeviceType } from '@/hooks/use-mobile';
 import webDevBlog from '@/blogs/webDevelopment.json';
 import algorithmsBlog from '@/blogs/algorithms.json';
 
+/**
+ * Main Index page component
+ */
 const Index = () => {
-  // Initialize with the sample blogs
+  // State management
   const [blogs, setBlogs] = useState([webDevBlog, algorithmsBlog]);
   const [filteredBlogs, setFilteredBlogs] = useState(blogs);
   const [showBlogCreator, setShowBlogCreator] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [showQuestionPaper, setShowQuestionPaper] = useState(false);
   const [selectedBlog, setSelectedBlog] = useState<typeof blogs[0] | null>(null);
-  const { isMobile } = useDeviceType();
+  const [showSettings, setShowSettings] = useState(false);
+  const { isMobile, isTablet } = useDeviceType();
 
+  // Load blogs from localStorage on mount
   useEffect(() => {
     // Try to load saved blogs from localStorage
     const savedBlogs = localStorage.getItem('learningLabBlogs');
@@ -42,11 +48,12 @@ const Index = () => {
     }
   }, []);
 
+  // Save blogs to localStorage when they change
   useEffect(() => {
-    // Save blogs to localStorage whenever they change
     localStorage.setItem('learningLabBlogs', JSON.stringify(blogs));
   }, [blogs]);
 
+  // Handle search functionality
   const handleSearch = (term: string) => {
     if (!term.trim()) {
       setFilteredBlogs(blogs);
@@ -60,8 +67,14 @@ const Index = () => {
     );
     
     setFilteredBlogs(filtered);
+    
+    // Show feedback about search results
+    if (filtered.length === 0) {
+      toast.info('No blogs match your search criteria');
+    }
   };
 
+  // Handle adding a new blog
   const handleAddBlog = (blogData: typeof blogs[0]) => {
     const newBlogs = [...blogs, blogData];
     setBlogs(newBlogs);
@@ -120,14 +133,14 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-eduDark flex flex-col">
-      <div className="container mx-auto px-4 py-8 flex-grow">
-        <header className="mb-12">
+      <div className="container mx-auto px-4 py-6 sm:py-8 flex-grow">
+        <header className="mb-8 sm:mb-10">
           <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
             <div className="flex items-center gap-2">
-              <BookOpen className="text-eduAccent" size={28} />
-              <h1 className="text-3xl font-bold text-eduLight">Learning Lab</h1>
+              <BookOpen className="text-eduAccent" size={isMobile ? 24 : 28} />
+              <h1 className="text-2xl sm:text-3xl font-bold text-eduLight">Learning Lab</h1>
             </div>
-            <div className="flex flex-wrap items-center gap-3 justify-center">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 justify-center">
               <Button 
                 onClick={() => setShowChat(true)}
                 className="bg-eduAccent/20 hover:bg-eduAccent/30 text-eduLight"
@@ -142,7 +155,7 @@ const Index = () => {
                 size={isMobile ? "sm" : "default"}
               >
                 <FileText className="mr-2" size={isMobile ? 16 : 18} />
-                Generate Question Paper
+                Question Paper
               </Button>
               <Button 
                 onClick={() => setShowBlogCreator(true)}
@@ -150,6 +163,20 @@ const Index = () => {
               >
                 <PlusCircle className="mr-2" size={isMobile ? 16 : 18} />
                 Create Blog
+              </Button>
+              <Button
+                onClick={() => setShowSettings(true)}
+                variant="ghost"
+                size={isMobile ? "sm" : "icon"}
+                className="text-eduLight"
+                title="Settings"
+              >
+                {isMobile ? (
+                  <Settings className="mr-2" size={16} />
+                ) : (
+                  <Settings size={20} />
+                )}
+                {isMobile && "Settings"}
               </Button>
             </div>
           </div>
@@ -160,7 +187,7 @@ const Index = () => {
         </header>
         
         <main>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
             {filteredBlogs.length > 0 ? (
               filteredBlogs.map((blog, index) => (
                 <BlogCard
@@ -183,16 +210,22 @@ const Index = () => {
         </main>
       </div>
       
-      <footer className="mt-auto py-6 bg-secondary/20 border-t border-white/10">
+      <footer className="mt-auto py-4 sm:py-6 bg-secondary/20 border-t border-white/10">
         <div className="container mx-auto px-4 text-center">
-          <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Learning Lab. Created by AR Labs</p>
+          <p className="text-sm text-muted-foreground">
+            © {new Date().getFullYear()} Learning Lab. Created by AR Labs
+          </p>
         </div>
       </footer>
       
+      {/* Modals and Overlays */}
       {showBlogCreator && <BlogCreator onClose={closeBlogCreator} onSave={handleAddBlog} />}
       {showChat && <ChatOverlay onClose={closeChat} blogs={blogs} />}
       {selectedBlog && <BlogViewer blog={selectedBlog} onClose={closeBlogViewer} />}
       {showQuestionPaper && <QuestionPaperGenerator onClose={closeQuestionPaper} blogs={blogs} />}
+      
+      {/* Settings Dialog */}
+      <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />
     </div>
   );
 };
