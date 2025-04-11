@@ -1,0 +1,8 @@
+
+{
+  "title": "Understanding Algorithms and Data Structures",
+  "content": "# Algorithms and Data Structures\n\nAlgorithms and data structures are essential concepts in computer science and programming.\n\n## What are Data Structures?\n\nData structures are specialized formats for organizing and storing data. Some common data structures include:\n\n- Arrays\n- Linked Lists\n- Stacks\n- Queues\n- Trees\n- Graphs\n- Hash Tables\n\n## Common Algorithms\n\n### Sorting Algorithms\n\nSorting algorithms arrange data in a certain order, most commonly in numerical or lexicographical order.\n\n- Bubble Sort\n- Insertion Sort\n- Quick Sort\n- Merge Sort\n\n### Search Algorithms\n\nSearch algorithms help find specific items in a data structure.\n\n- Linear Search\n- Binary Search\n\n## Complexity Analysis\n\nWe analyze algorithms using **Big O notation** which describes the performance or complexity of an algorithm.",
+  "date": "Apr 11, 2025",
+  "readTime": "4 mins read",
+  "imageUrl": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5"
+}

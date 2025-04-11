@@ -4,12 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Bold, Italic, List, Image, Link, Heading, Check, Type, AlignLeft } from 'lucide-react';
+import { X, Bold, Italic, List, Image, Link, Heading, Check, Type, AlignLeft, Table, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface BlogCreatorProps {
   onClose: () => void;
-  onSave: (blogData: { title: string, content: string, date: string, readTime: string }) => void;
+  onSave: (blogData: { title: string, content: string, date: string, readTime: string, imageUrl?: string }) => void;
 }
 
 const TEMPLATE_OPTIONS = [
@@ -25,6 +25,7 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
   const [template, setTemplate] = useState('blank');
   const [activeTab, setActiveTab] = useState('write');
   const [generatedCode, setGeneratedCode] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   
   const handleTemplateChange = (value: string) => {
     setTemplate(value);
@@ -48,6 +49,11 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
   const insertFormatting = (format: string) => {
     // Get cursor position
     const textArea = document.getElementById('content-area') as HTMLTextAreaElement;
+    if (!textArea) {
+      toast.error('Text editor not found');
+      return;
+    }
+    
     const start = textArea.selectionStart;
     const end = textArea.selectionEnd;
     const selectedText = content.substring(start, end);
@@ -78,6 +84,11 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
         break;
       case 'fillblank':
         newText = content.substring(0, start) + `___${selectedText || ''}___` + content.substring(end);
+        break;
+      case 'table':
+        newText = content.substring(0, start) + 
+        `\n| Header 1 | Header 2 | Header 3 |\n| -------- | -------- | -------- |\n| Cell 1   | Cell 2   | Cell 3   |\n| Cell 4   | Cell 5   | Cell 6   |` + 
+        content.substring(end);
         break;
     }
     
@@ -121,7 +132,8 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
       title,
       content,
       date,
-      readTime
+      readTime,
+      imageUrl: imageUrl || undefined
     };
     
     const codeString = JSON.stringify(blogData, null, 2);
@@ -148,7 +160,7 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
     const readTimeMinutes = Math.max(1, Math.ceil(wordCount / 200));
     const readTime = `${readTimeMinutes} min${readTimeMinutes > 1 ? 's' : ''} read`;
     
-    onSave({ title, content, date, readTime });
+    onSave({ title, content, date, readTime, imageUrl });
     toast.success('Blog saved successfully!');
     onClose();
   };
@@ -156,6 +168,29 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
   const copyToClipboard = () => {
     navigator.clipboard.writeText(generatedCode);
     toast.success('Code copied to clipboard!');
+  };
+
+  const downloadBlogFile = () => {
+    if (!generatedCode) {
+      toast.error('Please generate code first');
+      return;
+    }
+    
+    const fileName = title.toLowerCase().replace(/\s+/g, '-') + '.json';
+    const blob = new Blob([generatedCode], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    
+    // Clean up
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast.success(`File "${fileName}" downloaded successfully!`);
   };
 
   return (
@@ -166,13 +201,21 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
           <Button variant="ghost" size="icon" onClick={onClose}><X /></Button>
         </div>
         
-        <div className="mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Input
             type="text"
             placeholder="Blog Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="text-xl font-medium bg-secondary/60 border-eduAccent/20 focus:border-eduAccent"
+          />
+          
+          <Input
+            type="text"
+            placeholder="Image URL (optional)"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            className="bg-secondary/60 border-eduAccent/20 focus:border-eduAccent"
           />
         </div>
         
@@ -192,7 +235,7 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
             </Select>
           </div>
           
-          <div className="flex items-center space-x-2 bg-secondary/60 p-1 rounded-md">
+          <div className="flex items-center space-x-2 bg-secondary/60 p-1 rounded-md overflow-x-auto">
             <Button variant="ghost" size="icon" onClick={() => insertFormatting('bold')} title="Bold">
               <Bold size={18} />
             </Button>
@@ -216,6 +259,9 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
             </Button>
             <Button variant="ghost" size="icon" onClick={() => insertFormatting('fillblank')} title="Fill in the blank">
               <Type size={18} />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => insertFormatting('table')} title="Insert Table">
+              <Table size={18} />
             </Button>
           </div>
         </div>
@@ -241,7 +287,13 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
             <div className="bg-secondary/60 p-4 rounded-lg">
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-lg font-medium">Generated Blog Code</h3>
-                <Button onClick={copyToClipboard} variant="secondary" size="sm">Copy Code</Button>
+                <div className="flex gap-2">
+                  <Button onClick={copyToClipboard} variant="secondary" size="sm">Copy Code</Button>
+                  <Button onClick={downloadBlogFile} variant="secondary" size="sm">
+                    <FileDown size={16} className="mr-1" />
+                    Download JSON
+                  </Button>
+                </div>
               </div>
               <pre className="whitespace-pre-wrap text-sm overflow-x-auto p-4 bg-black/30 rounded border border-eduAccent/20">
                 {generatedCode || 'Generate code first using the button below'}

@@ -10,6 +10,7 @@ interface BlogViewerProps {
     content: string;
     date: string;
     readTime: string;
+    imageUrl?: string;
   };
   onClose: () => void;
 }
@@ -31,7 +32,38 @@ const BlogViewer: React.FC<BlogViewerProps> = ({ blog, onClose }) => {
     // Replace lists
     html = html.replace(/^- (.*$)/gm, '<li class="ml-5">$1</li>');
     html = html.replace(/<\/li>\n<li/g, '</li><li');
-    html = html.replace(/(<li.*<\/li>)/s, '<ul class="my-2">$1</ul>');
+    html = html.replace(/(<li.*<\/li>)/gs, '<ul class="my-2">$1</ul>');
+    
+    // Replace tables
+    const convertTable = (match: string) => {
+      const rows = match.trim().split('\n');
+      let tableHtml = '<table class="w-full border-collapse my-4">';
+      
+      rows.forEach((row, rowIndex) => {
+        const cells = row.split('|').filter(cell => cell.trim() !== '');
+        const isHeader = rowIndex === 0;
+        const isDelimiter = row.includes('----');
+        
+        if (!isDelimiter) {
+          tableHtml += '<tr>';
+          cells.forEach(cell => {
+            if (isHeader) {
+              tableHtml += `<th class="border border-white/20 px-3 py-2 bg-white/5">${cell.trim()}</th>`;
+            } else {
+              tableHtml += `<td class="border border-white/20 px-3 py-2">${cell.trim()}</td>`;
+            }
+          });
+          tableHtml += '</tr>';
+        }
+      });
+      
+      tableHtml += '</table>';
+      return tableHtml;
+    };
+    
+    // Find and convert tables
+    const tableRegex = /\|.*\|[\s\S]*?\|.*\|/g;
+    html = html.replace(tableRegex, convertTable);
     
     // Replace checkboxes
     html = html
@@ -74,6 +106,16 @@ const BlogViewer: React.FC<BlogViewerProps> = ({ blog, onClose }) => {
             <span>{blog.readTime}</span>
           </div>
         </div>
+        
+        {blog.imageUrl && (
+          <div className="px-6 pt-6">
+            <img 
+              src={blog.imageUrl} 
+              alt={blog.title} 
+              className="w-full max-h-[400px] object-cover rounded-lg"
+            />
+          </div>
+        )}
         
         <ScrollArea className="max-h-[60vh]">
           <div className="p-6">
