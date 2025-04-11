@@ -6,8 +6,10 @@ import SearchBar from '@/components/SearchBar';
 import BlogCreator from '@/components/BlogCreator';
 import ChatOverlay from '@/components/ChatOverlay';
 import BlogViewer from '@/components/BlogViewer';
-import { PlusCircle, MessageCircle, BookOpen } from 'lucide-react';
+import QuestionPaperGenerator from '@/components/QuestionPaperGenerator';
+import { PlusCircle, MessageCircle, BookOpen, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { useDeviceType } from '@/hooks/use-mobile';
 
 // Import sample blogs from local files
 import webDevBlog from '@/blogs/webDevelopment.json';
@@ -19,11 +21,13 @@ const Index = () => {
   const [filteredBlogs, setFilteredBlogs] = useState(blogs);
   const [showBlogCreator, setShowBlogCreator] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [showQuestionPaper, setShowQuestionPaper] = useState(false);
   const [selectedBlog, setSelectedBlog] = useState<typeof blogs[0] | null>(null);
+  const { isMobile } = useDeviceType();
 
   useEffect(() => {
     // Try to load saved blogs from localStorage
-    const savedBlogs = localStorage.getItem('eduScribeBlogs');
+    const savedBlogs = localStorage.getItem('learningLabBlogs');
     if (savedBlogs) {
       try {
         const parsedBlogs = JSON.parse(savedBlogs);
@@ -40,7 +44,7 @@ const Index = () => {
 
   useEffect(() => {
     // Save blogs to localStorage whenever they change
-    localStorage.setItem('eduScribeBlogs', JSON.stringify(blogs));
+    localStorage.setItem('learningLabBlogs', JSON.stringify(blogs));
   }, [blogs]);
 
   const handleSearch = (term: string) => {
@@ -65,7 +69,7 @@ const Index = () => {
     toast.success('New blog added successfully!');
   };
 
-  // Handle blog visibility toggling with animation
+  // Handle overlay visibility toggling with animation
   const closeBlogViewer = () => {
     const overlay = document.querySelector('.overlay');
     if (overlay) {
@@ -102,25 +106,49 @@ const Index = () => {
     }
   };
 
+  const closeQuestionPaper = () => {
+    const overlay = document.querySelector('.overlay');
+    if (overlay) {
+      overlay.classList.add('closing');
+      setTimeout(() => {
+        setShowQuestionPaper(false);
+      }, 300);
+    } else {
+      setShowQuestionPaper(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-eduDark">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-eduDark flex flex-col">
+      <div className="container mx-auto px-4 py-8 flex-grow">
         <header className="mb-12">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
             <div className="flex items-center gap-2">
               <BookOpen className="text-eduAccent" size={28} />
-              <h1 className="text-3xl font-bold text-eduLight">EduScribe Canvas</h1>
+              <h1 className="text-3xl font-bold text-eduLight">Learning Lab</h1>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3 justify-center">
               <Button 
                 onClick={() => setShowChat(true)}
                 className="bg-eduAccent/20 hover:bg-eduAccent/30 text-eduLight"
+                size={isMobile ? "sm" : "default"}
               >
-                <MessageCircle className="mr-2" size={18} />
+                <MessageCircle className="mr-2" size={isMobile ? 16 : 18} />
                 Chat Q&A
               </Button>
-              <Button onClick={() => setShowBlogCreator(true)}>
-                <PlusCircle className="mr-2" size={18} />
+              <Button 
+                onClick={() => setShowQuestionPaper(true)}
+                className="bg-eduAccent/20 hover:bg-eduAccent/30 text-eduLight"
+                size={isMobile ? "sm" : "default"}
+              >
+                <FileText className="mr-2" size={isMobile ? 16 : 18} />
+                Generate Question Paper
+              </Button>
+              <Button 
+                onClick={() => setShowBlogCreator(true)}
+                size={isMobile ? "sm" : "default"}
+              >
+                <PlusCircle className="mr-2" size={isMobile ? 16 : 18} />
                 Create Blog
               </Button>
             </div>
@@ -132,7 +160,7 @@ const Index = () => {
         </header>
         
         <main>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredBlogs.length > 0 ? (
               filteredBlogs.map((blog, index) => (
                 <BlogCard
@@ -155,9 +183,16 @@ const Index = () => {
         </main>
       </div>
       
+      <footer className="mt-auto py-6 bg-secondary/20 border-t border-white/10">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Learning Lab. Created by AR Labs</p>
+        </div>
+      </footer>
+      
       {showBlogCreator && <BlogCreator onClose={closeBlogCreator} onSave={handleAddBlog} />}
       {showChat && <ChatOverlay onClose={closeChat} blogs={blogs} />}
       {selectedBlog && <BlogViewer blog={selectedBlog} onClose={closeBlogViewer} />}
+      {showQuestionPaper && <QuestionPaperGenerator onClose={closeQuestionPaper} blogs={blogs} />}
     </div>
   );
 };

@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { X, CalendarIcon, ClockIcon } from 'lucide-react';
+import { useDeviceType } from '@/hooks/use-mobile';
 
 interface BlogViewerProps {
   blog: {
@@ -16,6 +17,8 @@ interface BlogViewerProps {
 }
 
 const BlogViewer: React.FC<BlogViewerProps> = ({ blog, onClose }) => {
+  const { isMobile } = useDeviceType();
+  
   // Function to render markdown-like content
   const renderContent = (content: string) => {
     // Replace headings
@@ -90,13 +93,13 @@ const BlogViewer: React.FC<BlogViewerProps> = ({ blog, onClose }) => {
   
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="container max-w-3xl mx-auto my-8 glass rounded-lg animate-fade-in" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-between items-center p-6 border-b border-white/10">
-          <h1 className="text-2xl font-bold">{blog.title}</h1>
+      <div className="container max-w-3xl mx-auto my-8 glass rounded-lg animate-fade-in max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center p-4 md:p-6 border-b border-white/10">
+          <h1 className="text-xl md:text-2xl font-bold">{blog.title}</h1>
           <Button variant="ghost" size="icon" onClick={onClose}><X /></Button>
         </div>
         
-        <div className="flex items-center gap-6 px-6 py-3 border-b border-white/10 text-sm text-muted-foreground">
+        <div className="flex items-center gap-6 px-4 md:px-6 py-2 md:py-3 border-b border-white/10 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <CalendarIcon size={14} />
             <span>{blog.date}</span>
@@ -108,17 +111,17 @@ const BlogViewer: React.FC<BlogViewerProps> = ({ blog, onClose }) => {
         </div>
         
         {blog.imageUrl && (
-          <div className="px-6 pt-6">
+          <div className="px-4 md:px-6 pt-4 md:pt-6">
             <img 
               src={blog.imageUrl} 
               alt={blog.title} 
-              className="w-full max-h-[400px] object-cover rounded-lg"
+              className="w-full max-h-[300px] object-cover rounded-lg"
             />
           </div>
         )}
         
-        <ScrollArea className="max-h-[60vh]">
-          <div className="p-6">
+        <ScrollArea className="flex-grow overflow-auto">
+          <div className="p-4 md:p-6">
             <div 
               className="prose prose-invert prose-eduAccent max-w-none"
               dangerouslySetInnerHTML={renderContent(blog.content)}

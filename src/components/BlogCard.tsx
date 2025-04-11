@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarIcon, ClockIcon, ImageIcon } from "lucide-react";
+import { useDeviceType } from '@/hooks/use-mobile';
 
 interface BlogCardProps {
   title: string;
@@ -12,13 +13,15 @@ interface BlogCardProps {
 }
 
 const BlogCard: React.FC<BlogCardProps> = ({ title, date, readTime, imageUrl, onClick }) => {
+  const { isMobile } = useDeviceType();
+  
   return (
     <Card 
       onClick={onClick} 
       className="chapter-card cursor-pointer hover:border-eduAccent/50 overflow-hidden"
     >
       {imageUrl ? (
-        <div className="w-full h-32 overflow-hidden">
+        <div className="w-full h-28 md:h-32 overflow-hidden">
           <img 
             src={imageUrl} 
             alt={title} 
@@ -26,21 +29,21 @@ const BlogCard: React.FC<BlogCardProps> = ({ title, date, readTime, imageUrl, on
           />
         </div>
       ) : (
-        <div className="w-full h-32 bg-secondary/40 flex items-center justify-center">
-          <ImageIcon className="text-muted-foreground" size={32} />
+        <div className="w-full h-28 md:h-32 bg-secondary/40 flex items-center justify-center">
+          <ImageIcon className="text-muted-foreground" size={isMobile ? 24 : 32} />
         </div>
       )}
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xl font-medium text-eduLight">{title}</CardTitle>
+      <CardHeader className="py-2 px-4 md:pb-2 md:px-6">
+        <CardTitle className="text-lg md:text-xl font-medium text-eduLight line-clamp-2">{title}</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="flex items-center text-sm text-muted-foreground gap-4">
+      <CardContent className="py-2 px-4 md:px-6">
+        <div className="flex items-center text-xs md:text-sm text-muted-foreground gap-3 md:gap-4">
           <div className="flex items-center gap-1">
-            <CalendarIcon size={14} />
+            <CalendarIcon size={isMobile ? 12 : 14} />
             <span>{date}</span>
           </div>
           <div className="flex items-center gap-1">
-            <ClockIcon size={14} />
+            <ClockIcon size={isMobile ? 12 : 14} />
             <span>{readTime}</span>
           </div>
         </div>
