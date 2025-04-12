@@ -4,8 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Bold, Italic, List, Image, Link, Heading, Check, Type, AlignLeft, Table, FileDown } from 'lucide-react';
+import { X, Bold, Italic, List, Image, Link, Heading, Check, Type, AlignLeft, Table, FileDown, Save, Eye } from 'lucide-react';
 import { toast } from 'sonner';
+import DevicePreview from './DevicePreview';
+import { BlogService } from '@/services/BlogService';
+import { marked } from 'marked';
 
 interface BlogCreatorProps {
   onClose: () => void;
@@ -26,6 +29,8 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
   const [activeTab, setActiveTab] = useState('write');
   const [generatedCode, setGeneratedCode] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [previewHtml, setPreviewHtml] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   
   const handleTemplateChange = (value: string) => {
     setTemplate(value);
@@ -138,9 +143,71 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
     
     const codeString = JSON.stringify(blogData, null, 2);
     setGeneratedCode(codeString);
-    setActiveTab('preview');
+    setActiveTab('preview-code');
     
     toast.success('Blog code generated!');
+  };
+
+  const handlePreview = () => {
+    try {
+      // Convert markdown to HTML for preview
+      const html = marked.parse(content);
+      setPreviewHtml(`<h1>${title}</h1>${html}`);
+      setActiveTab('preview-device');
+    } catch (error) {
+      console.error('Error generating preview:', error);
+      toast.error('Failed to generate preview');
+    }
+  };
+
+  const handleSaveToSupabase = async () => {
+    if (!title.trim() || !content.trim()) {
+      toast.error('Please add both title and content');
+      return;
+    }
+    
+    setIsSaving(true);
+    
+    try {
+      // Generate date and read time
+      const date = new Date().toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+      
+      const wordCount = content.split(/\s+/).filter(word => word.length > 0).length;
+      const readTimeMinutes = Math.max(1, Math.ceil(wordCount / 200));
+      const readTime = `${readTimeMinutes} min${readTimeMinutes > 1 ? 's' : ''} read`;
+      
+      // Save to Supabase
+      const blogData = {
+        title,
+        content,
+        date,
+        read_time: readTime,
+        image_url: imageUrl || null
+      };
+      
+      const savedBlog = await BlogService.createBlog(blogData);
+      
+      if (savedBlog) {
+        onSave({
+          title: savedBlog.title,
+          content: savedBlog.content,
+          date: savedBlog.date,
+          readTime: savedBlog.read_time,
+          imageUrl: savedBlog.image_url
+        });
+        toast.success('Blog saved to database successfully!');
+        onClose();
+      }
+    } catch (error) {
+      console.error('Error saving blog to Supabase:', error);
+      toast.error('Failed to save blog to database');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSave = () => {
@@ -267,9 +334,10 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="write">Write</TabsTrigger>
-            <TabsTrigger value="preview">Preview Code</TabsTrigger>
+            <TabsTrigger value="preview-device" onClick={handlePreview}>Preview</TabsTrigger>
+            <TabsTrigger value="preview-code">Generated Code</TabsTrigger>
           </TabsList>
           
           <TabsContent value="write" className="mt-4">
@@ -283,7 +351,11 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
             />
           </TabsContent>
           
-          <TabsContent value="preview" className="mt-4">
+          <TabsContent value="preview-device" className="mt-4">
+            <DevicePreview contentHtml={previewHtml} />
+          </TabsContent>
+          
+          <TabsContent value="preview-code" className="mt-4">
             <div className="bg-secondary/60 p-4 rounded-lg">
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-lg font-medium">Generated Blog Code</h3>
@@ -304,8 +376,18 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
         
         <div className="flex justify-end gap-3 mt-6">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button variant="secondary" onClick={generateBlogCode}>Generate Code</Button>
-          <Button onClick={handleSave}>Save Blog</Button>
+          <Button variant="secondary" onClick={generateBlogCode}>
+            <FileDown size={16} className="mr-1" />
+            Generate Code
+          </Button>
+          <Button variant="secondary" onClick={handlePreview}>
+            <Eye size={16} className="mr-1" />
+            Preview
+          </Button>
+          <Button onClick={handleSaveToSupabase} disabled={isSaving}>
+            <Save size={16} className="mr-1" />
+            {isSaving ? 'Saving...' : 'Save to Database'}
+          </Button>
         </div>
       </div>
     </div>
