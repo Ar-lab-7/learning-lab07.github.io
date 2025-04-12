@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -54,8 +53,14 @@ const Index = () => {
       setIsLoading(true);
       try {
         const fetchedBlogs = await BlogService.getBlogs();
-        setBlogs(fetchedBlogs);
-        setFilteredBlogs(fetchedBlogs);
+        // Map database field names to component field names for compatibility
+        const mappedBlogs = fetchedBlogs.map(blog => ({
+          ...blog,
+          readTime: blog.read_time,
+          imageUrl: blog.image_url
+        }));
+        setBlogs(mappedBlogs);
+        setFilteredBlogs(mappedBlogs);
       } catch (error) {
         console.error('Error fetching blogs:', error);
         toast.error('Failed to fetch blogs');
@@ -306,8 +311,8 @@ const Index = () => {
                     key={blog.id}
                     title={blog.title}
                     date={blog.date}
-                    readTime={blog.read_time}
-                    imageUrl={blog.image_url}
+                    readTime={blog.readTime || blog.read_time}
+                    imageUrl={blog.imageUrl || blog.image_url}
                     onClick={() => setSelectedBlog(blog)}
                   />
                 ))
@@ -338,10 +343,21 @@ const Index = () => {
       </footer>
       
       {/* Modals and Overlays */}
-      {showBlogCreator && <BlogCreator onClose={closeBlogCreator} onSave={handleAddBlog} />}
-      {showChat && <ChatOverlay onClose={closeChat} blogs={blogs} />}
-      {selectedBlog && <BlogViewer blog={selectedBlog} onClose={closeBlogViewer} />}
-      {showQuestionPaper && <QuestionPaperGenerator onClose={closeQuestionPaper} blogs={blogs} />}
+      {showBlogCreator && <BlogCreator onClose={() => setShowBlogCreator(false)} onSave={(blogData) => {
+        // Convert data format to match what components expect
+        const convertedBlog = {
+          ...blogData,
+          id: Math.random().toString(36).substring(2, 9),
+          read_time: blogData.readTime,
+          image_url: blogData.imageUrl,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        handleAddBlog(blogData);
+      }} />}
+      {showChat && <ChatOverlay onClose={() => setShowChat(false)} blogs={blogs} />}
+      {selectedBlog && <BlogViewer blog={selectedBlog} onClose={() => setSelectedBlog(null)} />}
+      {showQuestionPaper && <QuestionPaperGenerator onClose={() => setShowQuestionPaper(false)} blogs={blogs} />}
       
       {/* Settings Dialog */}
       <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />

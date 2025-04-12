@@ -12,6 +12,7 @@ export type TrafficData = {
   device?: string;
   country?: string;
   city?: string;
+  ip?: string;  // Add the missing ip property
   created_at: string;
 };
 
