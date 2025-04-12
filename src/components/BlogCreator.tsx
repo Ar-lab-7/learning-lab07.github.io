@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,7 +34,6 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
   const [previewHtml, setPreviewHtml] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   
-  // Initialize with blogToEdit data if provided
   useEffect(() => {
     if (blogToEdit) {
       setTitle(blogToEdit.title);
@@ -45,7 +43,6 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
   }, [blogToEdit]);
   
   const handleTemplateChange = (value: string) => {
-    // Only apply template if we're not editing an existing blog
     if (blogToEdit) {
       toast.info('Templates cannot be applied when editing a blog');
       return;
@@ -191,22 +188,24 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
       const readTime = `${readTimeMinutes} min${readTimeMinutes > 1 ? 's' : ''} read`;
       
       if (blogToEdit && onUpdate) {
-        // If editing, update the existing blog
         await onUpdate(blogToEdit.id, {
           title,
           content,
           readTime,
-          imageUrl
+          read_time: readTime,
+          imageUrl,
+          image_url: imageUrl
         });
         toast.success('Blog updated successfully!');
       } else {
-        // If creating, save as new blog
         const blogData = {
           title,
           content,
           date,
           readTime,
-          imageUrl: imageUrl || undefined
+          read_time: readTime,
+          imageUrl: imageUrl || undefined,
+          image_url: imageUrl || undefined
         };
         
         onSave(blogData);

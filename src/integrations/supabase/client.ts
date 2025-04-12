@@ -20,10 +20,10 @@ export type Blog = {
   title: string;
   content: string;
   date: string;
-  read_time: string;  // This is from the database
-  readTime: string;   // This is for compatibility with components expecting readTime
-  image_url?: string;
-  imageUrl?: string;  // For compatibility
+  read_time: string;  // Database field
+  readTime?: string;  // For compatibility with components
+  image_url?: string; // Database field
+  imageUrl?: string;  // For compatibility with components
   author_id?: string;
   created_at: string;
   updated_at: string;

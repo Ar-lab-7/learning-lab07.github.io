@@ -38,8 +38,8 @@ export const BlogService = {
         title: blogData.title,
         content: blogData.content,
         date: blogData.date,
-        read_time: blogData.readTime,
-        image_url: blogData.imageUrl
+        read_time: blogData.readTime || blogData.read_time, // Accept either property
+        image_url: blogData.imageUrl || blogData.image_url  // Accept either property
       };
 
       const { data, error } = await supabase
@@ -148,7 +148,8 @@ export const BlogService = {
         ...blog,
         id: `local-${Date.now()}`,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        read_time: blog.readTime || blog.read_time // Make sure read_time is set
       };
       
       savedBlogs.push(newBlog);
