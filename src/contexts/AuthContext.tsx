@@ -27,6 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Fetch user profile from Supabase
   const fetchUserProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile for user ID:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -39,6 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data) {
+        console.log('Profile data received:', data);
         setProfile(data as UserProfile);
         setIsDeveloper(data.is_developer);
       }
@@ -49,17 +51,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Set up auth state listener
   useEffect(() => {
+    console.log('Setting up auth state listener');
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state changed:', event, session);
-        setSession(session);
-        setUser(session?.user ?? null);
+      (event, newSession) => {
+        console.log('Auth state changed:', event, newSession);
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
         
         // Fetch profile data if user is logged in
-        if (session?.user) {
+        if (newSession?.user) {
           setTimeout(() => {
-            fetchUserProfile(session.user.id);
+            fetchUserProfile(newSession.user.id);
           }, 0);
         } else {
           setProfile(null);
@@ -69,13 +73,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session check:', session);
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+      console.log('Initial session check:', existingSession);
+      setSession(existingSession);
+      setUser(existingSession?.user ?? null);
       
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
+      if (existingSession?.user) {
+        fetchUserProfile(existingSession.user.id);
       }
       
       setIsLoading(false);
@@ -92,25 +96,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Attempting to sign in with username:', username);
       
       // Find the email associated with this username
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', username)
-        .single();
-
-      if (profileError || !profileData) {
-        console.error('Profile lookup error:', profileError);
-        toast.error('Invalid username or password');
-        throw profileError || new Error('User not found');
-      }
-
-      console.log('Found profile ID:', profileData.id);
-
-      // Now get the email from auth.users using the profile ID
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('email')
-        .eq('id', profileData.id)
+        .eq('username', username)
         .single();
 
       if (userError || !userData) {
@@ -119,7 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw userError || new Error('User not found');
       }
 
-      console.log('Found user email:', userData.email);
+      console.log('Found user email for sign in:', userData.email);
 
       // Sign in with the email and password
       const { error } = await supabase.auth.signInWithPassword({
@@ -144,14 +133,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Sign up with username, email and password
   const signUp = async (username: string, email: string, password: string) => {
     try {
+      console.log('Attempting to sign up with username:', username, 'and email:', email);
+      
       // Check if username already exists
       const { data: existingUser, error: checkError } = await supabase
-        .from('profiles')
+        .from('users')
         .select('username')
         .eq('username', username)
         .single();
 
-      if (existingUser) {
+      if (!checkError && existingUser) {
+        console.error('Username already exists');
         toast.error('Username already taken');
         return;
       }
@@ -168,23 +160,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
+        console.error('Signup error:', error);
         toast.error(error.message);
         throw error;
       }
 
-      // Update the newly created profile with the username
-      if (data.user) {
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ username })
-          .eq('id', data.user.id);
-
-        if (updateError) {
-          console.error('Error updating profile:', updateError);
-        }
-      }
-
-      toast.success('Signed up successfully. Please check your email for verification.');
+      console.log('Signup successful, user data:', data);
+      toast.success('Signed up successfully. You can now log in.');
     } catch (error) {
       console.error('Sign up error:', error);
       throw error;

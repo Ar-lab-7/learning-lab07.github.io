@@ -39,13 +39,15 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ open, onOpenChange }) => {
     
     try {
       if (activeTab === 'login') {
+        console.log('Attempting login with username:', username);
         await signIn(username, password);
         toast.success('Login successful');
         onOpenChange(false);
       } else {
+        console.log('Attempting signup with username:', username, 'and email:', email);
         await signUp(username, email, password);
         toast.success('Account created successfully');
-        toast.info('Please check your email to verify your account');
+        toast.info('You can now log in with your username and password');
         setActiveTab('login');
       }
     } catch (error) {
@@ -72,7 +74,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ open, onOpenChange }) => {
           </DialogTitle>
           <DialogDescription className="text-center">
             {activeTab === 'login' 
-              ? 'Sign in to your account to continue' 
+              ? 'Sign in with your username to continue' 
               : 'Sign up to start using Learning Lab'}
           </DialogDescription>
         </DialogHeader>

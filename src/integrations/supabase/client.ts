@@ -37,3 +37,11 @@ export type UserProfile = {
   created_at: string;
   updated_at: string;
 };
+
+// Types for user data
+export type UserData = {
+  id: string;
+  username: string;
+  email: string;
+  created_at: string;
+};

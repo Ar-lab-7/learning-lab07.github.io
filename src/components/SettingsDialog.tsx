@@ -12,62 +12,86 @@ interface SettingsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// Extract types for better type safety
+type ThemeOption = 'dark' | 'light' | 'system';
+type FontSizeOption = 'small' | 'medium' | 'large';
+
+interface AppSettings {
+  theme: ThemeOption;
+  fontSize: FontSizeOption;
+  autoSave: boolean;
+  notificationsEnabled: boolean;
+  blogStorageLocation: string;
+}
+
+// Default settings
+const defaultSettings: AppSettings = {
+  theme: 'dark',
+  fontSize: 'medium',
+  autoSave: true,
+  notificationsEnabled: true,
+  blogStorageLocation: 'localStorage',
+};
+
 /**
  * Settings dialog component for app configuration
  */
 const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onOpenChange }) => {
   // Settings state
-  const [settings, setSettings] = useState({
-    theme: 'dark',
-    fontSize: 'medium',
-    autoSave: true,
-    notificationsEnabled: true,
-    blogStorageLocation: 'localStorage',
-  });
+  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   
   // Load settings from localStorage on mount
   useEffect(() => {
     const savedSettings = localStorage.getItem('learningLabSettings');
     if (savedSettings) {
       try {
-        setSettings(JSON.parse(savedSettings));
-        applyTheme(JSON.parse(savedSettings).theme);
-        applyFontSize(JSON.parse(savedSettings).fontSize);
+        const parsedSettings = JSON.parse(savedSettings);
+        console.log('Loaded settings:', parsedSettings);
+        setSettings(parsedSettings);
+        applyTheme(parsedSettings.theme);
+        applyFontSize(parsedSettings.fontSize);
       } catch (error) {
         console.error('Failed to parse settings:', error);
+        // Fall back to defaults
+        applyTheme(defaultSettings.theme);
+        applyFontSize(defaultSettings.fontSize);
       }
+    } else {
+      // Apply default settings
+      applyTheme(defaultSettings.theme);
+      applyFontSize(defaultSettings.fontSize);
     }
   }, []);
   
   // Save settings to localStorage when changed
   useEffect(() => {
+    console.log('Saving settings:', settings);
     localStorage.setItem('learningLabSettings', JSON.stringify(settings));
   }, [settings]);
   
   // Apply theme setting
-  const applyTheme = (theme: string) => {
+  const applyTheme = (theme: ThemeOption) => {
+    console.log('Applying theme:', theme);
     const root = document.documentElement;
+    
+    // First remove all theme classes
+    root.classList.remove('dark', 'light');
+    
     if (theme === 'dark') {
       root.classList.add('dark');
-      root.classList.remove('light');
     } else if (theme === 'light') {
       root.classList.add('light');
-      root.classList.remove('dark');
     } else if (theme === 'system') {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (prefersDark) {
-        root.classList.add('dark');
-        root.classList.remove('light');
-      } else {
-        root.classList.add('light');
-        root.classList.remove('dark');
-      }
+      root.classList.add(prefersDark ? 'dark' : 'light');
     }
   };
   
   // Apply font size setting
-  const applyFontSize = (fontSize: string) => {
+  const applyFontSize = (fontSize: FontSizeOption) => {
+    console.log('Applying font size:', fontSize);
     const html = document.documentElement;
+    
     if (fontSize === 'small') {
       html.style.fontSize = '14px';
     } else if (fontSize === 'medium') {
@@ -78,7 +102,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onOpenChange }) =
   };
   
   // Handle settings changes
-  const updateSetting = (key: keyof typeof settings, value: any) => {
+  const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     setSettings(prev => ({
       ...prev,
       [key]: value
@@ -86,19 +110,19 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onOpenChange }) =
     
     // Apply settings immediately
     if (key === 'theme') {
-      applyTheme(value);
+      applyTheme(value as ThemeOption);
     } else if (key === 'fontSize') {
-      applyFontSize(value);
+      applyFontSize(value as FontSizeOption);
     }
     
     // Show toast for feedback
     toast.success(`${key.charAt(0).toUpperCase() + key.slice(1)} updated`);
   };
   
-  // Export all blogs
+  // Data management functions
   const exportBlogs = () => {
     try {
-      const blogsData = localStorage.getItem('learningLabBlogs');
+      const blogsData = localStorage.getItem('userBlogs');
       if (!blogsData) {
         toast.error('No blogs found to export');
         return;
@@ -119,7 +143,6 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onOpenChange }) =
     }
   };
   
-  // Import blogs
   const importBlogs = () => {
     try {
       const input = document.createElement('input');
@@ -147,7 +170,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onOpenChange }) =
               return;
             }
             
-            localStorage.setItem('learningLabBlogs', content);
+            localStorage.setItem('userBlogs', content);
             toast.success('Blogs imported successfully');
             window.location.reload(); // Reload to show imported blogs
           } catch (error) {
@@ -166,16 +189,14 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onOpenChange }) =
     }
   };
   
-  // Clear all blogs
   const clearAllBlogs = () => {
     if (confirm('Are you sure you want to delete all blogs? This action cannot be undone.')) {
-      localStorage.removeItem('learningLabBlogs');
+      localStorage.removeItem('userBlogs');
       toast.success('All blogs have been removed');
       setTimeout(() => window.location.reload(), 1500); // Reload after toast
     }
   };
   
-  // Show app info
   const showAppInfo = () => {
     toast.info(
       <div className="text-sm">
@@ -211,7 +232,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onOpenChange }) =
             </div>
             <Select 
               value={settings.theme} 
-              onValueChange={(value) => updateSetting('theme', value)}
+              onValueChange={(value: ThemeOption) => updateSetting('theme', value)}
             >
               <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder="Select theme" />
@@ -232,7 +253,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onOpenChange }) =
             </div>
             <Select 
               value={settings.fontSize} 
-              onValueChange={(value) => updateSetting('fontSize', value)}
+              onValueChange={(value: FontSizeOption) => updateSetting('fontSize', value)}
             >
               <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder="Font size" />
