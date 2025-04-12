@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,7 +34,6 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
   const handleTemplateChange = (value: string) => {
     setTemplate(value);
     
-    // Set template content based on selection
     switch(value) {
       case 'article':
         setContent('# Introduction\n\nWrite your introduction here.\n\n## Main Content\n\nYour main content goes here.\n\n## Conclusion\n\nSummarize your article here.');
@@ -52,7 +50,6 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
   };
 
   const insertFormatting = (format: string) => {
-    // Get cursor position
     const textArea = document.getElementById('content-area') as HTMLTextAreaElement;
     if (!textArea) {
       toast.error('Text editor not found');
@@ -99,7 +96,6 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
     
     setContent(newText);
     
-    // Restore focus to textarea
     setTimeout(() => {
       textArea.focus();
       textArea.setSelectionRange(
@@ -120,19 +116,16 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
       return;
     }
     
-    // Generate date and read time
     const date = new Date().toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'short', 
       day: 'numeric' 
     });
     
-    // Estimate read time based on word count (average reading speed: 200 words/minute)
     const wordCount = content.split(/\s+/).filter(word => word.length > 0).length;
     const readTimeMinutes = Math.max(1, Math.ceil(wordCount / 200));
     const readTime = `${readTimeMinutes} min${readTimeMinutes > 1 ? 's' : ''} read`;
     
-    // Generate the blog code
     const blogData = {
       title,
       content,
@@ -150,7 +143,6 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
 
   const handlePreview = () => {
     try {
-      // Convert markdown to HTML for preview
       const html = marked.parse(content);
       setPreviewHtml(`<h1>${title}</h1>${html}`);
       setActiveTab('preview-device');
@@ -169,7 +161,6 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
     setIsSaving(true);
     
     try {
-      // Generate date and read time
       const date = new Date().toLocaleDateString('en-US', { 
         year: 'numeric', 
         month: 'short', 
@@ -180,13 +171,14 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
       const readTimeMinutes = Math.max(1, Math.ceil(wordCount / 200));
       const readTime = `${readTimeMinutes} min${readTimeMinutes > 1 ? 's' : ''} read`;
       
-      // Save to Supabase
       const blogData = {
         title,
         content,
         date,
         read_time: readTime,
-        image_url: imageUrl || null
+        image_url: imageUrl || null,
+        readTime: readTime,
+        imageUrl: imageUrl || undefined
       };
       
       const savedBlog = await BlogService.createBlog(blogData);
@@ -196,8 +188,8 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
           title: savedBlog.title,
           content: savedBlog.content,
           date: savedBlog.date,
-          readTime: savedBlog.read_time,
-          imageUrl: savedBlog.image_url
+          readTime: savedBlog.readTime,
+          imageUrl: savedBlog.imageUrl
         });
         toast.success('Blog saved to database successfully!');
         onClose();
@@ -216,7 +208,6 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
       return;
     }
     
-    // Generate date and read time
     const date = new Date().toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'short', 
@@ -253,7 +244,6 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
     document.body.appendChild(a);
     a.click();
     
-    // Clean up
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     

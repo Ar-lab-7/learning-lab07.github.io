@@ -17,7 +17,12 @@ export const BlogService = {
         return [];
       }
 
-      return data || [];
+      // Convert database field names to component field names for compatibility
+      return (data || []).map(blog => ({
+        ...blog,
+        readTime: blog.read_time,
+        imageUrl: blog.image_url || undefined
+      }));
     } catch (error) {
       console.error('Error in getBlogs:', error);
       toast.error('Failed to fetch blogs');
@@ -28,12 +33,18 @@ export const BlogService = {
   // Create a new blog in Supabase
   createBlog: async (blogData: Omit<Blog, 'id' | 'created_at' | 'updated_at' | 'author_id'>): Promise<Blog | null> => {
     try {
+      // Ensure we have the database fields set
+      const dbBlogData = {
+        title: blogData.title,
+        content: blogData.content,
+        date: blogData.date,
+        read_time: blogData.readTime,
+        image_url: blogData.imageUrl
+      };
+
       const { data, error } = await supabase
         .from('blogs')
-        .insert({
-          ...blogData,
-          author_id: supabase.auth.getUser().then(res => res.data.user?.id),
-        })
+        .insert(dbBlogData)
         .select()
         .single();
 
@@ -43,8 +54,15 @@ export const BlogService = {
         return null;
       }
 
+      // Map the response to include the component-expected fields
+      const responseBlog: Blog = {
+        ...data,
+        readTime: data.read_time,
+        imageUrl: data.image_url
+      };
+
       toast.success('Blog created successfully');
-      return data;
+      return responseBlog;
     } catch (error) {
       console.error('Error in createBlog:', error);
       toast.error('Failed to create blog');
@@ -55,9 +73,24 @@ export const BlogService = {
   // Update an existing blog
   updateBlog: async (id: string, blogData: Partial<Blog>): Promise<Blog | null> => {
     try {
+      // Convert component field names to database field names if needed
+      const dbUpdateData: any = {
+        ...blogData
+      };
+      
+      if (blogData.readTime) {
+        dbUpdateData.read_time = blogData.readTime;
+        delete dbUpdateData.readTime;
+      }
+      
+      if (blogData.imageUrl) {
+        dbUpdateData.image_url = blogData.imageUrl;
+        delete dbUpdateData.imageUrl;
+      }
+
       const { data, error } = await supabase
         .from('blogs')
-        .update(blogData)
+        .update(dbUpdateData)
         .eq('id', id)
         .select()
         .single();
@@ -68,8 +101,15 @@ export const BlogService = {
         return null;
       }
 
+      // Map the response to include the component-expected fields
+      const responseBlog: Blog = {
+        ...data,
+        readTime: data.read_time,
+        imageUrl: data.image_url
+      };
+
       toast.success('Blog updated successfully');
-      return data;
+      return responseBlog;
     } catch (error) {
       console.error('Error in updateBlog:', error);
       toast.error('Failed to update blog');

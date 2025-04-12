@@ -53,14 +53,8 @@ const Index = () => {
       setIsLoading(true);
       try {
         const fetchedBlogs = await BlogService.getBlogs();
-        // Map database field names to component field names for compatibility
-        const mappedBlogs = fetchedBlogs.map(blog => ({
-          ...blog,
-          readTime: blog.read_time,
-          imageUrl: blog.image_url
-        }));
-        setBlogs(mappedBlogs);
-        setFilteredBlogs(mappedBlogs);
+        setBlogs(fetchedBlogs);
+        setFilteredBlogs(fetchedBlogs);
       } catch (error) {
         console.error('Error fetching blogs:', error);
         toast.error('Failed to fetch blogs');
@@ -121,7 +115,9 @@ const Index = () => {
       content: blogData.content,
       date: blogData.date,
       read_time: blogData.readTime,
+      readTime: blogData.readTime,
       image_url: blogData.imageUrl,
+      imageUrl: blogData.imageUrl,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -361,12 +357,11 @@ const Index = () => {
         <ChatOverlay 
           onClose={() => setShowChat(false)} 
           blogs={blogs.map(blog => ({
-            ...blog,
             title: blog.title,
             content: blog.content,
             date: blog.date,
-            readTime: blog.readTime || blog.read_time,
-            imageUrl: blog.imageUrl || blog.image_url
+            readTime: blog.readTime,
+            imageUrl: blog.imageUrl
           }))} 
         />
       }
@@ -377,8 +372,8 @@ const Index = () => {
             title: selectedBlog.title,
             content: selectedBlog.content,
             date: selectedBlog.date,
-            readTime: selectedBlog.readTime || selectedBlog.read_time,
-            imageUrl: selectedBlog.imageUrl || selectedBlog.image_url
+            readTime: selectedBlog.readTime,
+            imageUrl: selectedBlog.imageUrl
           }} 
           onClose={() => setSelectedBlog(null)} 
         />
@@ -391,8 +386,8 @@ const Index = () => {
             title: blog.title,
             content: blog.content,
             date: blog.date,
-            readTime: blog.readTime || blog.read_time,
-            imageUrl: blog.imageUrl || blog.image_url
+            readTime: blog.readTime,
+            imageUrl: blog.imageUrl
           }))} 
         />
       }
