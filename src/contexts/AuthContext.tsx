@@ -9,8 +9,8 @@ interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signIn: (username: string, password: string) => Promise<void>;
+  signUp: (username: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   isDeveloper: boolean;
 }
@@ -84,11 +84,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  // Sign in with email and password
-  const signIn = async (email: string, password: string) => {
+  // Sign in with username and password
+  const signIn = async (username: string, password: string) => {
     try {
+      // Find the email associated with this username
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', username)
+        .single();
+
+      if (profileError) {
+        toast.error('Invalid username or password');
+        throw profileError;
+      }
+
+      // Now get the email from auth.users using the profile ID
+      const { data: userData, error: userError } = await supabase.auth.admin.getUserById(profileData.id);
+
+      if (userError || !userData.user) {
+        toast.error('Invalid username or password');
+        throw userError || new Error('User not found');
+      }
+
+      // Sign in with the email and password
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: userData.user.email!,
         password,
       });
 
@@ -100,21 +121,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.success('Signed in successfully');
     } catch (error) {
       console.error('Sign in error:', error);
+      toast.error('Failed to sign in');
       throw error;
     }
   };
 
-  // Sign up with email and password
-  const signUp = async (email: string, password: string) => {
+  // Sign up with username, email and password
+  const signUp = async (username: string, email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signUp({
+      // Check if username already exists
+      const { data: existingUser, error: checkError } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', username)
+        .single();
+
+      if (existingUser) {
+        toast.error('Username already taken');
+        return;
+      }
+
+      // If username is available, proceed with signup
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            username: username // Add username to user metadata
+          }
+        }
       });
 
       if (error) {
         toast.error(error.message);
         throw error;
+      }
+
+      // Update the newly created profile with the username
+      if (data.user) {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ username })
+          .eq('id', data.user.id);
+
+        if (updateError) {
+          console.error('Error updating profile:', updateError);
+        }
       }
 
       toast.success('Signed up successfully. Please check your email for verification.');

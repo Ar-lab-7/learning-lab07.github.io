@@ -14,6 +14,7 @@ interface LoginDialogProps {
 }
 
 const LoginDialog: React.FC<LoginDialogProps> = ({ open, onOpenChange }) => {
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState('login');
@@ -24,7 +25,12 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ open, onOpenChange }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password) {
+    if (activeTab === 'login' && (!username || !password)) {
+      toast.error('Please enter both username and password');
+      return;
+    }
+    
+    if (activeTab === 'register' && (!username || !email || !password)) {
       toast.error('Please fill in all fields');
       return;
     }
@@ -33,10 +39,10 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ open, onOpenChange }) => {
     
     try {
       if (activeTab === 'login') {
-        await signIn(email, password);
+        await signIn(username, password);
         onOpenChange(false);
       } else {
-        await signUp(email, password);
+        await signUp(username, email, password);
         toast.info('Please check your email to verify your account');
       }
     } catch (error) {
@@ -48,6 +54,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ open, onOpenChange }) => {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
+    setUsername('');
     setEmail('');
     setPassword('');
   };
@@ -75,17 +82,31 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ open, onOpenChange }) => {
           <form onSubmit={handleSubmit}>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="username">Username</Label>
                 <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="you@example.com" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
+                  id="username" 
+                  placeholder="yourusername" 
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="username"
                   required
                 />
               </div>
+              
+              {activeTab === 'register' && (
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="you@example.com" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
+                    required
+                  />
+                </div>
+              )}
               
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
@@ -109,12 +130,6 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ open, onOpenChange }) => {
                   ? 'Processing...' 
                   : activeTab === 'login' ? 'Sign In' : 'Create Account'}
               </Button>
-              
-              {activeTab === 'login' && (
-                <div className="mt-2 text-center text-xs text-muted-foreground">
-                  <p>Developer account: arhub07-2010@example.com / a@Rawat2010##</p>
-                </div>
-              )}
             </div>
           </form>
         </Tabs>
