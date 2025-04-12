@@ -21,7 +21,7 @@ export type Blog = {
   content: string;
   date: string;
   read_time: string;  // This is from the database
-  readTime?: string;  // This is for compatibility with components expecting readTime
+  readTime: string;  // This is for compatibility with components expecting readTime (not optional)
   image_url?: string;
   imageUrl?: string;  // For compatibility
   author_id?: string;

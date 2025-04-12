@@ -350,14 +350,52 @@ const Index = () => {
           id: Math.random().toString(36).substring(2, 9),
           read_time: blogData.readTime,
           image_url: blogData.imageUrl,
+          readTime: blogData.readTime,
+          imageUrl: blogData.imageUrl,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
         handleAddBlog(blogData);
       }} />}
-      {showChat && <ChatOverlay onClose={() => setShowChat(false)} blogs={blogs} />}
-      {selectedBlog && <BlogViewer blog={selectedBlog} onClose={() => setSelectedBlog(null)} />}
-      {showQuestionPaper && <QuestionPaperGenerator onClose={() => setShowQuestionPaper(false)} blogs={blogs} />}
+      {showChat && 
+        <ChatOverlay 
+          onClose={() => setShowChat(false)} 
+          blogs={blogs.map(blog => ({
+            ...blog,
+            title: blog.title,
+            content: blog.content,
+            date: blog.date,
+            readTime: blog.readTime || blog.read_time,
+            imageUrl: blog.imageUrl || blog.image_url
+          }))} 
+        />
+      }
+      
+      {selectedBlog && 
+        <BlogViewer 
+          blog={{
+            title: selectedBlog.title,
+            content: selectedBlog.content,
+            date: selectedBlog.date,
+            readTime: selectedBlog.readTime || selectedBlog.read_time,
+            imageUrl: selectedBlog.imageUrl || selectedBlog.image_url
+          }} 
+          onClose={() => setSelectedBlog(null)} 
+        />
+      }
+      
+      {showQuestionPaper && 
+        <QuestionPaperGenerator 
+          onClose={() => setShowQuestionPaper(false)} 
+          blogs={blogs.map(blog => ({
+            title: blog.title,
+            content: blog.content,
+            date: blog.date,
+            readTime: blog.readTime || blog.read_time,
+            imageUrl: blog.imageUrl || blog.image_url
+          }))} 
+        />
+      }
       
       {/* Settings Dialog */}
       <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />
