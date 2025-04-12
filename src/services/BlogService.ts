@@ -138,5 +138,43 @@ export const BlogService = {
       toast.error('Failed to delete blog');
       return false;
     }
+  },
+
+  // Save a blog to local storage (for non-developer users)
+  saveToLocalStorage: (blog: Omit<Blog, 'id' | 'created_at' | 'updated_at' | 'author_id'>) => {
+    try {
+      const savedBlogs = JSON.parse(localStorage.getItem('userBlogs') || '[]');
+      const newBlog = {
+        ...blog,
+        id: `local-${Date.now()}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      savedBlogs.push(newBlog);
+      localStorage.setItem('userBlogs', JSON.stringify(savedBlogs));
+      
+      toast.success('Blog saved to local storage');
+      return newBlog;
+    } catch (error) {
+      console.error('Error saving to local storage:', error);
+      toast.error('Failed to save blog locally');
+      return null;
+    }
+  },
+  
+  // Get blogs from local storage
+  getLocalBlogs: (): Blog[] => {
+    try {
+      const savedBlogs = JSON.parse(localStorage.getItem('userBlogs') || '[]');
+      return savedBlogs.map((blog: any) => ({
+        ...blog,
+        readTime: blog.readTime || blog.read_time,
+        imageUrl: blog.imageUrl || blog.image_url
+      }));
+    } catch (error) {
+      console.error('Error getting blogs from local storage:', error);
+      return [];
+    }
   }
 };

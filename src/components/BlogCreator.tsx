@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,10 +9,13 @@ import { toast } from 'sonner';
 import DevicePreview from './DevicePreview';
 import { BlogService } from '@/services/BlogService';
 import { marked } from 'marked';
+import { Blog } from '@/integrations/supabase/client';
 
 interface BlogCreatorProps {
   onClose: () => void;
   onSave: (blogData: { title: string, content: string, date: string, readTime: string, imageUrl?: string }) => void;
+  blogToEdit?: Blog | null;
+  onUpdate?: (id: string, blogData: Partial<Blog>) => Promise<void>;
 }
 
 const TEMPLATE_OPTIONS = [
@@ -21,7 +25,7 @@ const TEMPLATE_OPTIONS = [
   { value: 'quiz', label: 'Quiz Template' }
 ];
 
-const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
+const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, onUpdate }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [template, setTemplate] = useState('blank');
@@ -31,7 +35,22 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
   const [previewHtml, setPreviewHtml] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   
+  // Initialize with blogToEdit data if provided
+  useEffect(() => {
+    if (blogToEdit) {
+      setTitle(blogToEdit.title);
+      setContent(blogToEdit.content);
+      setImageUrl(blogToEdit.imageUrl || blogToEdit.image_url || '');
+    }
+  }, [blogToEdit]);
+  
   const handleTemplateChange = (value: string) => {
+    // Only apply template if we're not editing an existing blog
+    if (blogToEdit) {
+      toast.info('Templates cannot be applied when editing a blog');
+      return;
+    }
+    
     setTemplate(value);
     
     switch(value) {
@@ -171,56 +190,36 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
       const readTimeMinutes = Math.max(1, Math.ceil(wordCount / 200));
       const readTime = `${readTimeMinutes} min${readTimeMinutes > 1 ? 's' : ''} read`;
       
-      const blogData = {
-        title,
-        content,
-        date,
-        read_time: readTime,
-        image_url: imageUrl || null,
-        readTime: readTime,
-        imageUrl: imageUrl || undefined
-      };
-      
-      const savedBlog = await BlogService.createBlog(blogData);
-      
-      if (savedBlog) {
-        onSave({
-          title: savedBlog.title,
-          content: savedBlog.content,
-          date: savedBlog.date,
-          readTime: savedBlog.readTime,
-          imageUrl: savedBlog.imageUrl
+      if (blogToEdit && onUpdate) {
+        // If editing, update the existing blog
+        await onUpdate(blogToEdit.id, {
+          title,
+          content,
+          readTime,
+          imageUrl
         });
-        toast.success('Blog saved to database successfully!');
-        onClose();
+        toast.success('Blog updated successfully!');
+      } else {
+        // If creating, save as new blog
+        const blogData = {
+          title,
+          content,
+          date,
+          readTime,
+          imageUrl: imageUrl || undefined
+        };
+        
+        onSave(blogData);
+        toast.success('Blog saved successfully!');
       }
+      
+      onClose();
     } catch (error) {
-      console.error('Error saving blog to Supabase:', error);
-      toast.error('Failed to save blog to database');
+      console.error('Error saving blog:', error);
+      toast.error('Failed to save blog');
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleSave = () => {
-    if (!title.trim() || !content.trim()) {
-      toast.error('Please add both title and content');
-      return;
-    }
-    
-    const date = new Date().toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    });
-    
-    const wordCount = content.split(/\s+/).filter(word => word.length > 0).length;
-    const readTimeMinutes = Math.max(1, Math.ceil(wordCount / 200));
-    const readTime = `${readTimeMinutes} min${readTimeMinutes > 1 ? 's' : ''} read`;
-    
-    onSave({ title, content, date, readTime, imageUrl });
-    toast.success('Blog saved successfully!');
-    onClose();
   };
 
   const copyToClipboard = () => {
@@ -254,7 +253,7 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="container max-w-4xl mx-auto my-8 p-6 glass rounded-lg animate-fade-in" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Create New Blog</h2>
+          <h2 className="text-2xl font-bold">{blogToEdit ? 'Edit Blog' : 'Create New Blog'}</h2>
           <Button variant="ghost" size="icon" onClick={onClose}><X /></Button>
         </div>
         
@@ -278,7 +277,7 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
         
         <div className="flex items-center gap-4 mb-4">
           <div className="w-1/3">
-            <Select value={template} onValueChange={handleTemplateChange}>
+            <Select value={template} onValueChange={handleTemplateChange} disabled={!!blogToEdit}>
               <SelectTrigger>
                 <SelectValue placeholder="Select template" />
               </SelectTrigger>
@@ -376,7 +375,7 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave }) => {
           </Button>
           <Button onClick={handleSaveToSupabase} disabled={isSaving}>
             <Save size={16} className="mr-1" />
-            {isSaving ? 'Saving...' : 'Save to Database'}
+            {isSaving ? 'Saving...' : blogToEdit ? 'Update Blog' : 'Save Blog'}
           </Button>
         </div>
       </div>

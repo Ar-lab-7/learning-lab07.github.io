@@ -9,7 +9,7 @@ import BlogViewer from '@/components/BlogViewer';
 import QuestionPaperGenerator from '@/components/QuestionPaperGenerator';
 import SettingsDialog from '@/components/SettingsDialog';
 import LoginDialog from '@/components/LoginDialog';
-import { PlusCircle, MessageCircle, BookOpen, FileText, Settings, BarChart2, LogIn, LogOut, User } from 'lucide-react';
+import { PlusCircle, MessageCircle, BookOpen, FileText, Settings, BarChart2, LogIn, LogOut, User, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDeviceType } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,6 +24,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 /**
  * Main Index page component
@@ -39,6 +49,9 @@ const Index = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [blogToDelete, setBlogToDelete] = useState<string | null>(null);
+  const [blogToEdit, setBlogToEdit] = useState<Blog | null>(null);
+  const [userLocalBlogs, setUserLocalBlogs] = useState<Blog[]>([]);
   const { isMobile, isTablet } = useDeviceType();
   const { user, profile, signOut, isDeveloper } = useAuth();
 
@@ -86,6 +99,14 @@ const Index = () => {
     };
   }, []);
 
+  // Load user's local blogs
+  useEffect(() => {
+    if (user && !isDeveloper) {
+      const localBlogs = BlogService.getLocalBlogs();
+      setUserLocalBlogs(localBlogs);
+    }
+  }, [user, isDeveloper]);
+
   // Handle search functionality
   const handleSearch = (term: string) => {
     if (!term.trim()) {
@@ -108,24 +129,47 @@ const Index = () => {
   };
 
   // Handle adding a new blog
-  const handleAddBlog = (blogData: { title: string, content: string, date: string, readTime: string, imageUrl?: string }) => {
-    const newBlog: Blog = {
-      id: Math.random().toString(36).substring(2, 9), // Temporary ID, will be replaced by Supabase
-      title: blogData.title,
-      content: blogData.content,
-      date: blogData.date,
-      read_time: blogData.readTime,
-      readTime: blogData.readTime,
-      image_url: blogData.imageUrl,
-      imageUrl: blogData.imageUrl,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+  const handleAddBlog = async (blogData: { title: string, content: string, date: string, readTime: string, imageUrl?: string }) => {
+    // If user is not a developer, save to local storage
+    if (user && !isDeveloper) {
+      const newBlog = BlogService.saveToLocalStorage(blogData);
+      if (newBlog) {
+        setUserLocalBlogs(prev => [...prev, newBlog as Blog]);
+      }
+      return;
+    }
     
-    const newBlogs = [...blogs, newBlog];
-    setBlogs(newBlogs);
-    setFilteredBlogs(newBlogs);
-    toast.success('New blog added successfully!');
+    // Otherwise save to database
+    const saved = await BlogService.createBlog(blogData);
+    if (saved) {
+      const newBlogs = [...blogs, saved];
+      setBlogs(newBlogs);
+      setFilteredBlogs(newBlogs);
+    }
+  };
+
+  // Handle editing a blog
+  const handleEditBlog = async (id: string, blogData: Partial<Blog>) => {
+    const updated = await BlogService.updateBlog(id, blogData);
+    if (updated) {
+      const updatedBlogs = blogs.map(blog => 
+        blog.id === id ? { ...blog, ...updated } : blog
+      );
+      setBlogs(updatedBlogs);
+      setFilteredBlogs(updatedBlogs);
+      setBlogToEdit(null);
+    }
+  };
+
+  // Handle deleting a blog
+  const handleDeleteBlog = async (id: string) => {
+    const success = await BlogService.deleteBlog(id);
+    if (success) {
+      const updatedBlogs = blogs.filter(blog => blog.id !== id);
+      setBlogs(updatedBlogs);
+      setFilteredBlogs(updatedBlogs);
+    }
+    setBlogToDelete(null);
   };
 
   // Handle overlay visibility toggling with animation
@@ -147,9 +191,11 @@ const Index = () => {
       overlay.classList.add('closing');
       setTimeout(() => {
         setShowBlogCreator(false);
+        setBlogToEdit(null);
       }, 300);
     } else {
       setShowBlogCreator(false);
+      setBlogToEdit(null);
     }
   };
 
@@ -191,7 +237,11 @@ const Index = () => {
         <header className="mb-8 sm:mb-10">
           <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
             <div className="flex items-center gap-2">
-              <BookOpen className="text-eduAccent" size={isMobile ? 24 : 28} />
+              <img 
+                src="/lovable-uploads/452c66bd-5cde-4942-ba24-949d3c8a1341.png" 
+                alt="Learning Lab Logo" 
+                className="h-12 w-auto"
+              />
               <h1 className="text-2xl sm:text-3xl font-bold text-eduLight">Learning Lab</h1>
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 justify-center">
@@ -212,27 +262,27 @@ const Index = () => {
                 Question Paper
               </Button>
               
+              {(isDeveloper || (user && !isDeveloper)) && (
+                <Button 
+                  onClick={() => setShowBlogCreator(true)}
+                  size={isMobile ? "sm" : "default"}
+                >
+                  <PlusCircle className="mr-2" size={isMobile ? 16 : 18} />
+                  Create Blog
+                </Button>
+              )}
+              
               {isDeveloper && (
-                <>
-                  <Button 
-                    onClick={() => setShowBlogCreator(true)}
+                <Link to="/traffic">
+                  <Button
+                    variant="secondary"
                     size={isMobile ? "sm" : "default"}
+                    className="text-eduLight"
                   >
-                    <PlusCircle className="mr-2" size={isMobile ? 16 : 18} />
-                    Create Blog
+                    <BarChart2 className="mr-2" size={isMobile ? 16 : 18} />
+                    Traffic
                   </Button>
-                  
-                  <Link to="/traffic">
-                    <Button
-                      variant="secondary"
-                      size={isMobile ? "sm" : "default"}
-                      className="text-eduLight"
-                    >
-                      <BarChart2 className="mr-2" size={isMobile ? 16 : 18} />
-                      Traffic
-                    </Button>
-                  </Link>
-                </>
+                </Link>
               )}
               
               <Button
@@ -300,32 +350,85 @@ const Index = () => {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-eduAccent"></div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
-              {filteredBlogs.length > 0 ? (
-                filteredBlogs.map((blog) => (
-                  <BlogCard
-                    key={blog.id}
-                    title={blog.title}
-                    date={blog.date}
-                    readTime={blog.readTime || blog.read_time}
-                    imageUrl={blog.imageUrl || blog.image_url}
-                    onClick={() => setSelectedBlog(blog)}
-                  />
-                ))
-              ) : (
-                <div className="col-span-full text-center py-12">
-                  <h3 className="text-xl font-medium text-muted-foreground mb-2">No blogs found</h3>
-                  <p className="text-muted-foreground mb-4">
-                    {blogs.length === 0 
-                      ? 'No blogs have been created yet.' 
-                      : 'Create your first blog or try a different search term.'}
-                  </p>
-                  {isDeveloper && (
-                    <Button onClick={() => setShowBlogCreator(true)}>Create Blog</Button>
-                  )}
+            <>
+              {/* Supabase Blogs */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
+                {filteredBlogs.length > 0 ? (
+                  filteredBlogs.map((blog) => (
+                    <div key={blog.id} className="relative group">
+                      <BlogCard
+                        title={blog.title}
+                        date={blog.date}
+                        readTime={blog.readTime || blog.read_time}
+                        imageUrl={blog.imageUrl || blog.image_url}
+                        onClick={() => setSelectedBlog(blog)}
+                      />
+                      
+                      {isDeveloper && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                          <Button 
+                            variant="secondary" 
+                            size="icon" 
+                            className="h-8 w-8 bg-background/80 backdrop-blur-sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setBlogToEdit(blog);
+                              setShowBlogCreator(true);
+                            }}
+                          >
+                            <Edit size={14} />
+                          </Button>
+                          <Button 
+                            variant="destructive" 
+                            size="icon" 
+                            className="h-8 w-8 bg-destructive/80 backdrop-blur-sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setBlogToDelete(blog.id);
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  blogs.length === 0 && userLocalBlogs.length === 0 && (
+                    <div className="col-span-full text-center py-12">
+                      <h3 className="text-xl font-medium text-muted-foreground mb-2">No blogs found</h3>
+                      <p className="text-muted-foreground mb-4">
+                        {blogs.length === 0 
+                          ? 'No blogs have been created yet.' 
+                          : 'Create your first blog or try a different search term.'}
+                      </p>
+                      {(isDeveloper || (user && !isDeveloper)) && (
+                        <Button onClick={() => setShowBlogCreator(true)}>Create Blog</Button>
+                      )}
+                    </div>
+                  )
+                )}
+              </div>
+              
+              {/* User's Local Blogs (if user is logged in but not a developer) */}
+              {user && !isDeveloper && userLocalBlogs.length > 0 && (
+                <div className="mt-10">
+                  <h2 className="text-xl font-bold text-eduLight mb-4">Your Personal Blogs</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
+                    {userLocalBlogs.map((blog) => (
+                      <BlogCard
+                        key={blog.id}
+                        title={blog.title}
+                        date={blog.date}
+                        readTime={blog.readTime || blog.read_time}
+                        imageUrl={blog.imageUrl || blog.image_url}
+                        onClick={() => setSelectedBlog(blog)}
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
-            </div>
+            </>
           )}
         </main>
       </div>
@@ -339,29 +442,24 @@ const Index = () => {
       </footer>
       
       {/* Modals and Overlays */}
-      {showBlogCreator && <BlogCreator onClose={() => setShowBlogCreator(false)} onSave={(blogData) => {
-        // Convert data format to match what components expect
-        const convertedBlog = {
-          ...blogData,
-          id: Math.random().toString(36).substring(2, 9),
-          read_time: blogData.readTime,
-          image_url: blogData.imageUrl,
-          readTime: blogData.readTime,
-          imageUrl: blogData.imageUrl,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        handleAddBlog(blogData);
-      }} />}
+      {(showBlogCreator || blogToEdit) && (
+        <BlogCreator 
+          onClose={closeBlogCreator} 
+          onSave={handleAddBlog}
+          blogToEdit={blogToEdit}
+          onUpdate={handleEditBlog}
+        />
+      )}
+      
       {showChat && 
         <ChatOverlay 
-          onClose={() => setShowChat(false)} 
+          onClose={closeChat} 
           blogs={blogs.map(blog => ({
             title: blog.title,
             content: blog.content,
             date: blog.date,
-            readTime: blog.readTime,
-            imageUrl: blog.imageUrl
+            readTime: blog.readTime || blog.read_time,
+            imageUrl: blog.imageUrl || blog.image_url
           }))} 
         />
       }
@@ -372,22 +470,22 @@ const Index = () => {
             title: selectedBlog.title,
             content: selectedBlog.content,
             date: selectedBlog.date,
-            readTime: selectedBlog.readTime,
-            imageUrl: selectedBlog.imageUrl
+            readTime: selectedBlog.readTime || selectedBlog.read_time,
+            imageUrl: selectedBlog.imageUrl || selectedBlog.image_url
           }} 
-          onClose={() => setSelectedBlog(null)} 
+          onClose={closeBlogViewer} 
         />
       }
       
       {showQuestionPaper && 
         <QuestionPaperGenerator 
-          onClose={() => setShowQuestionPaper(false)} 
+          onClose={closeQuestionPaper} 
           blogs={blogs.map(blog => ({
             title: blog.title,
             content: blog.content,
             date: blog.date,
-            readTime: blog.readTime,
-            imageUrl: blog.imageUrl
+            readTime: blog.readTime || blog.read_time,
+            imageUrl: blog.imageUrl || blog.image_url
           }))} 
         />
       }
@@ -397,6 +495,24 @@ const Index = () => {
       
       {/* Login Dialog */}
       <LoginDialog open={showLogin} onOpenChange={setShowLogin} />
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!blogToDelete} onOpenChange={(open) => !open && setBlogToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the blog.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => blogToDelete && handleDeleteBlog(blogToDelete)}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
