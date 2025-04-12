@@ -52,6 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state changed:', event, session);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -69,6 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session);
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -87,6 +89,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Sign in with username and password
   const signIn = async (username: string, password: string) => {
     try {
+      console.log('Attempting to sign in with username:', username);
+      
       // Find the email associated with this username
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -94,26 +98,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('username', username)
         .single();
 
-      if (profileError) {
+      if (profileError || !profileData) {
+        console.error('Profile lookup error:', profileError);
         toast.error('Invalid username or password');
-        throw profileError;
+        throw profileError || new Error('User not found');
       }
 
-      // Now get the email from auth.users using the profile ID
-      const { data: userData, error: userError } = await supabase.auth.admin.getUserById(profileData.id);
+      console.log('Found profile ID:', profileData.id);
 
-      if (userError || !userData.user) {
+      // Now get the email from auth.users using the profile ID
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('email')
+        .eq('id', profileData.id)
+        .single();
+
+      if (userError || !userData) {
+        console.error('User lookup error:', userError);
         toast.error('Invalid username or password');
         throw userError || new Error('User not found');
       }
 
+      console.log('Found user email:', userData.email);
+
       // Sign in with the email and password
       const { error } = await supabase.auth.signInWithPassword({
-        email: userData.user.email!,
+        email: userData.email,
         password,
       });
 
       if (error) {
+        console.error('Sign in error:', error);
         toast.error(error.message);
         throw error;
       }

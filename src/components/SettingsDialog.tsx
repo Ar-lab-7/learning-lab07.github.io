@@ -31,6 +31,8 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onOpenChange }) =
     if (savedSettings) {
       try {
         setSettings(JSON.parse(savedSettings));
+        applyTheme(JSON.parse(savedSettings).theme);
+        applyFontSize(JSON.parse(savedSettings).fontSize);
       } catch (error) {
         console.error('Failed to parse settings:', error);
       }
@@ -42,12 +44,52 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onOpenChange }) =
     localStorage.setItem('learningLabSettings', JSON.stringify(settings));
   }, [settings]);
   
+  // Apply theme setting
+  const applyTheme = (theme: string) => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else if (theme === 'light') {
+      root.classList.add('light');
+      root.classList.remove('dark');
+    } else if (theme === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (prefersDark) {
+        root.classList.add('dark');
+        root.classList.remove('light');
+      } else {
+        root.classList.add('light');
+        root.classList.remove('dark');
+      }
+    }
+  };
+  
+  // Apply font size setting
+  const applyFontSize = (fontSize: string) => {
+    const html = document.documentElement;
+    if (fontSize === 'small') {
+      html.style.fontSize = '14px';
+    } else if (fontSize === 'medium') {
+      html.style.fontSize = '16px';
+    } else if (fontSize === 'large') {
+      html.style.fontSize = '18px';
+    }
+  };
+  
   // Handle settings changes
   const updateSetting = (key: keyof typeof settings, value: any) => {
     setSettings(prev => ({
       ...prev,
       [key]: value
     }));
+    
+    // Apply settings immediately
+    if (key === 'theme') {
+      applyTheme(value);
+    } else if (key === 'fontSize') {
+      applyFontSize(value);
+    }
     
     // Show toast for feedback
     toast.success(`${key.charAt(0).toUpperCase() + key.slice(1)} updated`);

@@ -40,13 +40,17 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ open, onOpenChange }) => {
     try {
       if (activeTab === 'login') {
         await signIn(username, password);
+        toast.success('Login successful');
         onOpenChange(false);
       } else {
         await signUp(username, email, password);
+        toast.success('Account created successfully');
         toast.info('Please check your email to verify your account');
+        setActiveTab('login');
       }
     } catch (error) {
       console.error('Authentication error:', error);
+      toast.error('Authentication failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }
