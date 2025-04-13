@@ -46,38 +46,71 @@ export type UserData = {
   created_at: string;
 };
 
-// Helper function to create developer user (only used in development)
+// Helper function to create developer user in database directly
 export const createDeveloperIfNeeded = async () => {
   try {
-    // Check if developer exists by trying to sign in
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: 'arhub-07-2010@example.com',
+    const developerUsername = 'arhub-07-2010';
+    
+    // First, check if the developer exists in the users table
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('username', developerUsername)
+      .single();
+    
+    if (!userError && userData) {
+      console.log('Developer user exists in the users table');
+      return;
+    }
+    
+    // Check if user already exists in auth by trying to sign in
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email: `${developerUsername}@example.com`,
       password: 'a@Rawat2010'
     });
     
-    if (!signInError) {
-      console.log('Developer user exists');
-      // Sign out after checking
+    if (!signInError && signInData) {
+      console.log('Developer user exists and can sign in');
       await supabase.auth.signOut();
       return;
     }
     
-    // If we got here, the developer doesn't exist, so create them
-    const { error: signUpError } = await supabase.auth.signUp({
-      email: 'arhub-07-2010@example.com',
-      password: 'a@Rawat2010',
-      options: {
-        data: {
-          username: 'arhub-07-2010'
-        }
-      }
-    });
+    // If we got here, either the developer doesn't exist or can't sign in
+    // We'll directly insert the user records in the database tables
     
-    if (signUpError) {
-      console.error('Error creating developer user:', signUpError);
+    // First manually create a UUID to use across tables
+    const developerId = crypto.randomUUID();
+    
+    // Insert into profiles table
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert({
+        id: developerId,
+        username: developerUsername,
+        is_developer: true
+      });
+    
+    if (profileError) {
+      console.error('Error creating developer profile:', profileError);
     } else {
-      console.log('Developer user created successfully');
+      console.log('Developer profile created successfully');
     }
+    
+    // Insert into users table
+    const { error: userInsertError } = await supabase
+      .from('users')
+      .insert({
+        id: developerId,
+        username: developerUsername,
+        email: `${developerUsername}@example.com`
+      });
+    
+    if (userInsertError) {
+      console.error('Error creating developer user record:', userInsertError);
+    } else {
+      console.log('Developer user record created successfully');
+    }
+    
   } catch (error) {
     console.error('Error in createDeveloperIfNeeded:', error);
   }

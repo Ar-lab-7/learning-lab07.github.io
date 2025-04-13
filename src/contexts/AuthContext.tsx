@@ -92,12 +92,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  // Sign in with username and password
+  // Sign in directly with username/password without email lookup
   const signIn = async (username: string, password: string) => {
     try {
-      console.log('Attempting to sign in with username:', username);
+      // Special case for developer user
+      if (username === 'arhub-07-2010') {
+        // Try to sign in directly with the known email format
+        const { error } = await supabase.auth.signInWithPassword({
+          email: 'arhub-07-2010@example.com',
+          password,
+        });
+
+        if (error) {
+          console.error('Developer sign in error:', error);
+          toast.error('Developer login failed. Please check your password.');
+          throw error;
+        }
+        return;
+      }
       
-      // Find the email associated with this username
+      // For regular users, look up the email first
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('email')
@@ -106,7 +120,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (userError || !userData) {
         console.error('User lookup error:', userError);
-        toast.error('Invalid username or password');
+        toast.error('User not found. Please check your username.');
         throw userError || new Error('User not found');
       }
 
@@ -120,14 +134,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Sign in error:', error);
-        toast.error(error.message);
+        toast.error('Invalid password. Please try again.');
         throw error;
       }
 
       toast.success('Signed in successfully');
     } catch (error) {
       console.error('Sign in error:', error);
-      toast.error('Failed to sign in');
       throw error;
     }
   };
