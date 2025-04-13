@@ -51,7 +51,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ open, onOpenChange }) => {
             Welcome to Learning Lab
           </DialogTitle>
           <DialogDescription className="text-center">
-            Sign in with your username to continue
+            Sign in with your username and password
           </DialogDescription>
         </DialogHeader>
         

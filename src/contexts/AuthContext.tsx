@@ -92,53 +92,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  // Sign in directly with username/password without email lookup
+  // Sign in with username/password - Only for developer user
   const signIn = async (username: string, password: string) => {
     try {
-      // Special case for developer user
-      if (username === 'arhub-07-2010') {
-        // Try to sign in directly with the known email format
-        const { error } = await supabase.auth.signInWithPassword({
-          email: 'arhub-07-2010@example.com',
-          password,
-        });
-
-        if (error) {
-          console.error('Developer sign in error:', error);
-          toast.error('Developer login failed. Please check your password.');
-          throw error;
-        }
-        return;
+      // Only allow the developer username
+      if (username !== 'arhub-07-2010') {
+        toast.error('Invalid username. Only developer login is supported.');
+        throw new Error('Invalid username');
       }
       
-      // For regular users, look up the email first
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('email')
+      // Special case for developer - use a hardcoded authentication approach
+      if (password !== 'a@Rawat2010') {
+        toast.error('Invalid password. Please try again.');
+        throw new Error('Invalid password');
+      }
+      
+      // Get developer profile directly from the database
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
         .eq('username', username)
         .single();
-
-      if (userError || !userData) {
-        console.error('User lookup error:', userError);
-        toast.error('User not found. Please check your username.');
-        throw userError || new Error('User not found');
+      
+      if (profileError || !profileData) {
+        console.error('Developer profile lookup error:', profileError);
+        toast.error('Developer profile not found. Please try again later.');
+        throw profileError || new Error('Developer profile not found');
       }
-
-      console.log('Found user email for sign in:', userData.email);
-
-      // Sign in with the email and password
-      const { error } = await supabase.auth.signInWithPassword({
-        email: userData.email,
-        password,
-      });
-
-      if (error) {
-        console.error('Sign in error:', error);
-        toast.error('Invalid password. Please try again.');
-        throw error;
-      }
-
-      toast.success('Signed in successfully');
+      
+      console.log('Developer profile found:', profileData);
+      
+      // Set developer state directly without using Supabase Auth
+      setProfile(profileData as UserProfile);
+      setIsDeveloper(true);
+      
+      toast.success('Signed in as developer');
     } catch (error) {
       console.error('Sign in error:', error);
       throw error;
@@ -148,7 +136,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Sign out
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      setProfile(null);
+      setIsDeveloper(false);
       toast.success('Signed out successfully');
     } catch (error) {
       console.error('Sign out error:', error);
