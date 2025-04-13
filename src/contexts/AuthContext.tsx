@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase, UserProfile } from '@/integrations/supabase/client';
+import { supabase, UserProfile, createDeveloperIfNeeded } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface AuthContextType {
@@ -51,6 +51,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Set up auth state listener
   useEffect(() => {
     console.log('Setting up auth state listener');
+    
+    // Try to create the developer user if needed
+    createDeveloperIfNeeded();
     
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(

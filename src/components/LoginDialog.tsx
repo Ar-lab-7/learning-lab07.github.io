@@ -101,11 +101,6 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ open, onOpenChange }) => {
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
-
-            <div className="text-xs text-center text-muted-foreground mt-2">
-              <p>To become a developer, use the developer credentials</p>
-              <p>For testing: Username <span className="font-mono bg-muted px-1 rounded">arhub-07-2010</span></p>
-            </div>
           </div>
         </form>
       </DialogContent>

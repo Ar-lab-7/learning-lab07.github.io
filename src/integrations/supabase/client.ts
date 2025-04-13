@@ -45,3 +45,40 @@ export type UserData = {
   email: string;
   created_at: string;
 };
+
+// Helper function to create developer user (only used in development)
+export const createDeveloperIfNeeded = async () => {
+  try {
+    // Check if developer exists by trying to sign in
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: 'arhub-07-2010@example.com',
+      password: 'a@Rawat2010'
+    });
+    
+    if (!signInError) {
+      console.log('Developer user exists');
+      // Sign out after checking
+      await supabase.auth.signOut();
+      return;
+    }
+    
+    // If we got here, the developer doesn't exist, so create them
+    const { error: signUpError } = await supabase.auth.signUp({
+      email: 'arhub-07-2010@example.com',
+      password: 'a@Rawat2010',
+      options: {
+        data: {
+          username: 'arhub-07-2010'
+        }
+      }
+    });
+    
+    if (signUpError) {
+      console.error('Error creating developer user:', signUpError);
+    } else {
+      console.log('Developer user created successfully');
+    }
+  } catch (error) {
+    console.error('Error in createDeveloperIfNeeded:', error);
+  }
+};

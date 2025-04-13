@@ -28,8 +28,8 @@ const ChatOverlay: React.FC<ChatOverlayProps> = ({ onClose, blogs }) => {
   const [messages, setMessages] = useState<Message[]>([
     { 
       id: 1, 
-      text: "Hi! I'm EduBot. Ask me any questions about the blog content, and I'll try to help you.",
-      formattedText: "<p>Hi! I'm EduBot. Ask me any questions about the blog content, and I'll try to help you.</p>", 
+      text: "Hi! I'm the Learning Lab Assistant. Ask me any questions about the blog content, and I'll try to help you.",
+      formattedText: "<p>Hi! I'm the Learning Lab Assistant. Ask me any questions about the blog content, and I'll try to help you.</p>", 
       isUser: false 
     }
   ]);
@@ -295,7 +295,7 @@ const ChatOverlay: React.FC<ChatOverlayProps> = ({ onClose, blogs }) => {
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="container max-w-2xl mx-auto my-8 h-[80vh] flex flex-col glass rounded-lg animate-fade-in" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center p-4 border-b border-white/10">
-          <h2 className="text-xl font-bold">EduScribe Q&A Chat</h2>
+          <h2 className="text-xl font-bold">Learning Lab Chat</h2>
           <Button variant="ghost" size="icon" onClick={onClose}><X /></Button>
         </div>
         
