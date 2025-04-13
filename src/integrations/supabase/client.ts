@@ -45,44 +45,68 @@ export type UserData = {
   created_at: string;
 };
 
-// Helper function to create developer user in database directly
-export const createDeveloperIfNeeded = async () => {
+// Helper function to directly create/get the developer user
+export const getOrCreateDeveloperProfile = async (): Promise<UserProfile | null> => {
   try {
     const developerUsername = 'arhub-07-2010';
+    const developerId = '00000000-0000-0000-0000-000000000000'; // Fixed ID for developer
     
-    // Check if the developer exists in the profiles table
-    const { data: profileData, error: profileError } = await supabase
+    // First check if the developer exists in the profiles table
+    const { data: existingProfile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
       .eq('username', developerUsername)
-      .single();
+      .maybeSingle();
     
-    if (!profileError && profileData) {
-      console.log('Developer profile exists');
-      return;
+    // If developer profile exists, return it
+    if (!profileError && existingProfile) {
+      console.log('Developer profile found:', existingProfile);
+      return existingProfile as UserProfile;
     }
     
-    // If we got here, the developer doesn't exist
-    // We'll directly insert records in the database tables
+    console.log('Developer profile not found, creating...');
     
-    // First manually create a UUID to use across tables
-    const developerId = crypto.randomUUID();
-    
-    // Insert into profiles table
-    const { error: profileInsertError } = await supabase
+    // Create the developer profile using direct insert
+    const { data: newProfile, error: insertError } = await supabase
       .from('profiles')
       .insert({
         id: developerId,
         username: developerUsername,
         is_developer: true
-      });
+      })
+      .select()
+      .single();
     
-    if (profileInsertError) {
-      console.error('Error creating developer profile:', profileInsertError);
-    } else {
-      console.log('Developer profile created successfully');
+    if (insertError) {
+      console.error('Error creating developer profile:', insertError);
+      
+      // If insert failed, try one more time with upsert
+      const { data: upsertProfile, error: upsertError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: developerId,
+          username: developerUsername,
+          is_developer: true
+        })
+        .select()
+        .single();
+        
+      if (upsertError) {
+        console.error('Upsert also failed:', upsertError);
+        return null;
+      }
+      
+      return upsertProfile as UserProfile;
     }
+    
+    return newProfile as UserProfile;
   } catch (error) {
-    console.error('Error in createDeveloperIfNeeded:', error);
+    console.error('Error in getOrCreateDeveloperProfile:', error);
+    return null;
   }
+};
+
+// For backward compatibility
+export const createDeveloperIfNeeded = async () => {
+  await getOrCreateDeveloperProfile();
 };

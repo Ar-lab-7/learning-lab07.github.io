@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase, UserProfile, createDeveloperIfNeeded } from '@/integrations/supabase/client';
+import { supabase, UserProfile, getOrCreateDeveloperProfile } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface AuthContextType {
@@ -23,67 +23,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [isDeveloper, setIsDeveloper] = useState(false);
 
-  // Fetch user profile from Supabase
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      console.log('Fetching profile for user ID:', userId);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching user profile:', error);
-        return;
-      }
-
-      if (data) {
-        console.log('Profile data received:', data);
-        setProfile(data as UserProfile);
-        setIsDeveloper(data.is_developer);
-      }
-    } catch (error) {
-      console.error('Error in fetchUserProfile:', error);
-    }
-  };
-
   // Set up auth state listener
   useEffect(() => {
     console.log('Setting up auth state listener');
     
     // Try to create the developer user if needed
-    createDeveloperIfNeeded();
+    getOrCreateDeveloperProfile();
     
-    // Set up auth state listener FIRST
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         console.log('Auth state changed:', event, newSession);
         setSession(newSession);
         setUser(newSession?.user ?? null);
-        
-        // Fetch profile data if user is logged in
-        if (newSession?.user) {
-          setTimeout(() => {
-            fetchUserProfile(newSession.user.id);
-          }, 0);
-        } else {
-          setProfile(null);
-          setIsDeveloper(false);
-        }
       }
     );
 
-    // THEN check for existing session
+    // Check for existing session
     supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
       console.log('Initial session check:', existingSession);
       setSession(existingSession);
       setUser(existingSession?.user ?? null);
-      
-      if (existingSession?.user) {
-        fetchUserProfile(existingSession.user.id);
-      }
-      
       setIsLoading(false);
     });
 
@@ -101,29 +61,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Invalid username');
       }
       
-      // Special case for developer - use a hardcoded authentication approach
+      // Special case for developer - use a hardcoded password
       if (password !== 'a@Rawat2010') {
         toast.error('Invalid password. Please try again.');
         throw new Error('Invalid password');
       }
       
-      // Get developer profile directly from the database
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('username', username)
-        .single();
+      // Get or create the developer profile directly
+      const developerProfile = await getOrCreateDeveloperProfile();
       
-      if (profileError || !profileData) {
-        console.error('Developer profile lookup error:', profileError);
-        toast.error('Developer profile not found. Please try again later.');
-        throw profileError || new Error('Developer profile not found');
+      if (!developerProfile) {
+        toast.error('Could not find or create developer profile. Please try again later.');
+        throw new Error('Developer profile not found or could not be created');
       }
       
-      console.log('Developer profile found:', profileData);
+      console.log('Developer profile retrieved:', developerProfile);
       
-      // Set developer state directly without using Supabase Auth
-      setProfile(profileData as UserProfile);
+      // Set developer state directly
+      setProfile(developerProfile);
       setIsDeveloper(true);
       
       toast.success('Signed in as developer');
