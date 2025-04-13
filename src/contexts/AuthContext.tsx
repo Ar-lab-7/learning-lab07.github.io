@@ -10,7 +10,6 @@ interface AuthContextType {
   profile: UserProfile | null;
   isLoading: boolean;
   signIn: (username: string, password: string) => Promise<void>;
-  signUp: (username: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   isDeveloper: boolean;
 }
@@ -130,49 +129,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Sign up with username, email and password
-  const signUp = async (username: string, email: string, password: string) => {
-    try {
-      console.log('Attempting to sign up with username:', username, 'and email:', email);
-      
-      // Check if username already exists
-      const { data: existingUser, error: checkError } = await supabase
-        .from('users')
-        .select('username')
-        .eq('username', username)
-        .single();
-
-      if (!checkError && existingUser) {
-        console.error('Username already exists');
-        toast.error('Username already taken');
-        return;
-      }
-
-      // If username is available, proceed with signup
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            username: username // Add username to user metadata
-          }
-        }
-      });
-
-      if (error) {
-        console.error('Signup error:', error);
-        toast.error(error.message);
-        throw error;
-      }
-
-      console.log('Signup successful, user data:', data);
-      toast.success('Signed up successfully. You can now log in.');
-    } catch (error) {
-      console.error('Sign up error:', error);
-      throw error;
-    }
-  };
-
   // Sign out
   const signOut = async () => {
     try {
@@ -190,7 +146,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     profile,
     isLoading,
     signIn,
-    signUp,
     signOut,
     isDeveloper,
   };

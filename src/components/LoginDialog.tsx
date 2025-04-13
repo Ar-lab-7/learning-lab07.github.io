@@ -4,9 +4,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { Lock, User } from 'lucide-react';
 
 interface LoginDialogProps {
   open: boolean;
@@ -15,41 +15,26 @@ interface LoginDialogProps {
 
 const LoginDialog: React.FC<LoginDialogProps> = ({ open, onOpenChange }) => {
   const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [activeTab, setActiveTab] = useState('login');
   const [isLoading, setIsLoading] = useState(false);
   
-  const { signIn, signUp } = useAuth();
+  const { signIn } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (activeTab === 'login' && (!username || !password)) {
+    if (!username || !password) {
       toast.error('Please enter both username and password');
-      return;
-    }
-    
-    if (activeTab === 'register' && (!username || !email || !password)) {
-      toast.error('Please fill in all fields');
       return;
     }
     
     setIsLoading(true);
     
     try {
-      if (activeTab === 'login') {
-        console.log('Attempting login with username:', username);
-        await signIn(username, password);
-        toast.success('Login successful');
-        onOpenChange(false);
-      } else {
-        console.log('Attempting signup with username:', username, 'and email:', email);
-        await signUp(username, email, password);
-        toast.success('Account created successfully');
-        toast.info('You can now log in with your username and password');
-        setActiveTab('login');
-      }
+      console.log('Attempting login with username:', username);
+      await signIn(username, password);
+      toast.success('Login successful');
+      onOpenChange(false);
     } catch (error) {
       console.error('Authentication error:', error);
       toast.error('Authentication failed. Please check your credentials.');
@@ -58,87 +43,71 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ open, onOpenChange }) => {
     }
   };
 
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    setUsername('');
-    setEmail('');
-    setPassword('');
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center">
-            {activeTab === 'login' ? 'Welcome Back' : 'Create an Account'}
+          <DialogTitle className="text-center text-xl font-bold">
+            Welcome to Learning Lab
           </DialogTitle>
           <DialogDescription className="text-center">
-            {activeTab === 'login' 
-              ? 'Sign in with your username to continue' 
-              : 'Sign up to start using Learning Lab'}
+            Sign in with your username to continue
           </DialogDescription>
         </DialogHeader>
         
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="register">Register</TabsTrigger>
-          </TabsList>
-          
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="username" className="text-sm font-medium">Username</Label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <User size={18} />
+                </div>
                 <Input 
                   id="username" 
-                  placeholder="yourusername" 
+                  placeholder="Enter your username" 
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  className="pl-10"
                   autoComplete="username"
                   required
                 />
               </div>
-              
-              {activeTab === 'register' && (
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="you@example.com" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete="email"
-                    required
-                  />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <Lock size={18} />
                 </div>
-              )}
-              
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
                 <Input 
                   id="password" 
                   type="password" 
                   placeholder="••••••••" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  autoComplete={activeTab === 'login' ? 'current-password' : 'new-password'}
+                  className="pl-10"
+                  autoComplete="current-password"
                   required
                 />
               </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isLoading}
-              >
-                {isLoading 
-                  ? 'Processing...' 
-                  : activeTab === 'login' ? 'Sign In' : 'Create Account'}
-              </Button>
             </div>
-          </form>
-        </Tabs>
+            
+            <Button 
+              type="submit" 
+              className="w-full py-2 transition-all duration-200 bg-gradient-to-b from-primary/90 to-primary/70 hover:from-primary hover:to-primary/80 text-background font-semibold"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Signing in...' : 'Sign In'}
+            </Button>
+
+            <div className="text-xs text-center text-muted-foreground mt-2">
+              <p>To become a developer, use the developer credentials</p>
+              <p>For testing: Username <span className="font-mono bg-muted px-1 rounded">arhub-07-2010</span></p>
+            </div>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
