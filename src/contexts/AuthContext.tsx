@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 
 interface AuthContextType {
   profile: UserProfile | null;
+  user: any | null; // Add user property to fix the type error
   isLoading: boolean;
   isDeveloper: boolean;
   signIn: (username: string, password: string) => Promise<boolean>;
@@ -48,6 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const value = {
     profile,
+    user: profile, // Set user to be the same as profile to fix the error
     isLoading,
     isDeveloper,
     signIn,

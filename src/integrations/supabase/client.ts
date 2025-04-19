@@ -21,6 +21,21 @@ export type UserProfile = {
   is_developer: boolean;
 };
 
+// Type for blog data
+export type Blog = {
+  id: string;
+  title: string;
+  content: string;
+  date: string;
+  read_time?: string;
+  readTime?: string;
+  image_url?: string;
+  imageUrl?: string;
+  created_at?: string;
+  updated_at?: string;
+  author_id?: string;
+};
+
 // Function to validate developer login
 export const validateDeveloperLogin = async (username: string, password: string): Promise<UserProfile | null> => {
   // Hardcoded developer credentials
