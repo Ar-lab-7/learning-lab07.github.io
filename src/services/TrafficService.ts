@@ -1,8 +1,16 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// Website ID for the Learning Lab
+// Define TrafficStats type
+export interface TrafficStats {
+  totalViews: number;
+  uniqueVisitors: number;
+  byDate: Record<string, number>;
+  byPage: Record<string, number>;
+  byDevice: Record<string, number>;
+  byBrowser: Record<string, number>;
+}
+
 const WEBSITE_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 export const TrafficService = {
@@ -109,6 +117,71 @@ export const TrafficService = {
     } catch (error) {
       console.error('Error in getDeviceStats:', error);
       return {};
+    }
+  },
+
+  // New method to get comprehensive traffic stats
+  getTrafficStats: async (): Promise<TrafficStats> => {
+    try {
+      // Fetch total pageviews
+      const { count: totalViews } = await supabase
+        .from('pageviews')
+        .select('*', { count: 'exact', head: true });
+
+      // Fetch unique visitors
+      const { count: uniqueVisitors } = await supabase
+        .from('pageviews')
+        .select('ip', { count: 'exact', head: true });
+
+      // Fetch visits by date
+      const { data: dateData } = await supabase
+        .from('pageviews')
+        .select('created_at')
+        .then(result => ({
+          ...result,
+          data: result.data?.reduce((acc, item) => {
+            const date = new Date(item.created_at).toISOString().split('T')[0];
+            acc[date] = (acc[date] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>)
+        }));
+
+      // Fetch visits by page
+      const { data: pageData } = await supabase
+        .from('pageviews')
+        .select('page_url')
+        .then(result => ({
+          ...result,
+          data: result.data?.reduce((acc, item) => {
+            const page = item.page_url || 'Unknown';
+            acc[page] = (acc[page] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>)
+        }));
+
+      // Use existing methods for device and browser stats
+      const byDevice = await TrafficService.getDeviceStats();
+      const byBrowser = await TrafficService.getBrowserStats();
+
+      return {
+        totalViews: totalViews || 0,
+        uniqueVisitors: uniqueVisitors || 0,
+        byDate: dateData || {},
+        byPage: pageData || {},
+        byDevice,
+        byBrowser
+      };
+    } catch (error) {
+      console.error('Error fetching traffic stats:', error);
+      toast.error('Failed to fetch traffic statistics');
+      return {
+        totalViews: 0,
+        uniqueVisitors: 0,
+        byDate: {},
+        byPage: {},
+        byDevice: {},
+        byBrowser: {}
+      };
     }
   }
 };

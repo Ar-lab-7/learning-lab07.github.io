@@ -7,7 +7,19 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, BarChart, Calendar, Globe, Laptop, Smartphone, Tablet } from 'lucide-react';
 import { TrafficService, TrafficStats } from '@/services/TrafficService';
 import { useAuth } from '@/contexts/AuthContext';
-import { ResponsiveContainer, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
+import { 
+  ResponsiveContainer, 
+  BarChart as RechartsBarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  PieChart, 
+  Pie, 
+  Cell 
+} from 'recharts';
 
 const TrafficPage = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -291,3 +303,4 @@ const TrafficPage = () => {
 };
 
 export default TrafficPage;
+
