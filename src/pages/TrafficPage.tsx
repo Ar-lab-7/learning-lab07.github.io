@@ -125,7 +125,7 @@ const TrafficPage = () => {
               <CardHeader className="pb-2">
                 <CardDescription>Pages / Visitor</CardDescription>
                 <CardTitle className="text-3xl">
-                  {stats.uniqueVisitors ? (stats.totalViews / stats.uniqueVisitors).toFixed(1) : '0'}
+                  {stats.uniqueVisitors > 0 ? (stats.totalViews / stats.uniqueVisitors).toFixed(1) : '0'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -137,21 +137,29 @@ const TrafficPage = () => {
               <CardHeader className="pb-2">
                 <CardDescription>Top Device</CardDescription>
                 <CardTitle className="text-3xl">
-                  {Object.entries(stats.byDevice).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'}
+                  {Object.entries(stats.byDevice).length > 0 
+                    ? Object.entries(stats.byDevice).sort((a, b) => b[1] - a[1])[0]?.[0] 
+                    : 'N/A'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center">
-                  {Object.entries(stats.byDevice).sort((a, b) => b[1] - a[1])[0]?.[0] === 'Mobile' ? (
-                    <Smartphone className="text-muted-foreground" size={16} />
-                  ) : Object.entries(stats.byDevice).sort((a, b) => b[1] - a[1])[0]?.[0] === 'Tablet' ? (
-                    <Tablet className="text-muted-foreground" size={16} />
+                  {Object.entries(stats.byDevice).length > 0 ? (
+                    <>
+                      {Object.entries(stats.byDevice).sort((a, b) => b[1] - a[1])[0]?.[0] === 'Mobile' ? (
+                        <Smartphone className="text-muted-foreground" size={16} />
+                      ) : Object.entries(stats.byDevice).sort((a, b) => b[1] - a[1])[0]?.[0] === 'Tablet' ? (
+                        <Tablet className="text-muted-foreground" size={16} />
+                      ) : (
+                        <Laptop className="text-muted-foreground" size={16} />
+                      )}
+                      <span className="ml-2 text-muted-foreground">
+                        {Object.entries(stats.byDevice).sort((a, b) => b[1] - a[1])[0]?.[1] || 0} visits
+                      </span>
+                    </>
                   ) : (
-                    <Laptop className="text-muted-foreground" size={16} />
+                    <span className="text-muted-foreground">No data</span>
                   )}
-                  <span className="ml-2 text-muted-foreground">
-                    {Object.entries(stats.byDevice).sort((a, b) => b[1] - a[1])[0]?.[1] || 0} visits
-                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -303,4 +311,3 @@ const TrafficPage = () => {
 };
 
 export default TrafficPage;
-

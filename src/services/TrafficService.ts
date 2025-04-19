@@ -120,7 +120,6 @@ export const TrafficService = {
     }
   },
 
-  // New method to get comprehensive traffic stats
   getTrafficStats: async (): Promise<TrafficStats> => {
     try {
       // Fetch total pageviews
@@ -131,12 +130,14 @@ export const TrafficService = {
       // Fetch unique visitors
       const { count: uniqueVisitors } = await supabase
         .from('pageviews')
-        .select('ip', { count: 'exact', head: true });
+        .select('ip', { count: 'exact', head: true })
+        .not('ip', 'is', null);
 
       // Fetch visits by date
       const { data: dateData } = await supabase
         .from('pageviews')
         .select('created_at')
+        .order('created_at', { ascending: true })
         .then(result => ({
           ...result,
           data: result.data?.reduce((acc, item) => {
