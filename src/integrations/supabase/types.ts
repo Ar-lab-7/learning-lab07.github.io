@@ -103,45 +103,18 @@ export type Database = {
       }
       profiles: {
         Row: {
-          created_at: string | null
           id: string
           is_developer: boolean | null
-          updated_at: string | null
-          username: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id: string
-          is_developer?: boolean | null
-          updated_at?: string | null
-          username?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          is_developer?: boolean | null
-          updated_at?: string | null
-          username?: string | null
-        }
-        Relationships: []
-      }
-      users: {
-        Row: {
-          created_at: string | null
-          email: string
-          id: string
           username: string
         }
         Insert: {
-          created_at?: string | null
-          email: string
-          id: string
+          id?: string
+          is_developer?: boolean | null
           username: string
         }
         Update: {
-          created_at?: string | null
-          email?: string
           id?: string
+          is_developer?: boolean | null
           username?: string
         }
         Relationships: []
@@ -178,10 +151,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      create_developer_if_not_exists: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       record_pageview: {
         Args: {
           site_id: string
