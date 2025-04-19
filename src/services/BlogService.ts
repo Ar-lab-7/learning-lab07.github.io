@@ -33,13 +33,20 @@ export const BlogService = {
   // Create a new blog in Supabase
   createBlog: async (blogData: Omit<Blog, 'id' | 'created_at' | 'updated_at' | 'author_id'>): Promise<Blog | null> => {
     try {
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('You must be logged in to create a blog');
+        return null;
+      }
+
       // Ensure we have the database fields set
       const dbBlogData = {
         title: blogData.title,
         content: blogData.content,
         date: blogData.date,
-        read_time: blogData.readTime || blogData.read_time, // Accept either property
-        image_url: blogData.imageUrl || blogData.image_url  // Accept either property
+        read_time: blogData.readTime || blogData.read_time,
+        image_url: blogData.imageUrl || blogData.image_url
       };
 
       const { data, error } = await supabase
