@@ -65,6 +65,7 @@ export default {
 				},
 				eduDark: '#1A1F2C',
 				eduLight: '#F1F0FB',
+				eduLightAccent: '#9A77CF',
 				eduAccent: '#D6BCFA',
 				eduHighlight: '#1EAEDB'
 			},

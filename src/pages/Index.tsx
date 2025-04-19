@@ -238,7 +238,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-eduDark flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       <div className="container mx-auto px-4 py-6 sm:py-8 flex-grow">
         <header className="mb-8 sm:mb-10">
           <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
@@ -248,12 +248,12 @@ const Index = () => {
                 alt="Learning Lab Logo" 
                 className="h-12 w-auto"
               />
-              <h1 className="text-2xl sm:text-3xl font-bold text-eduLight">Learning Lab</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Learning Lab</h1>
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 justify-center">
               <Button 
                 onClick={() => setShowChat(true)}
-                className="bg-eduAccent/20 hover:bg-eduAccent/30 text-eduLight"
+                className="bg-accent/20 hover:bg-accent/30 text-foreground"
                 size={isMobile ? "sm" : "default"}
               >
                 <MessageCircle className="mr-2" size={isMobile ? 16 : 18} />
@@ -261,7 +261,7 @@ const Index = () => {
               </Button>
               <Button 
                 onClick={() => setShowQuestionPaper(true)}
-                className="bg-eduAccent/20 hover:bg-eduAccent/30 text-eduLight"
+                className="bg-accent/20 hover:bg-accent/30 text-foreground"
                 size={isMobile ? "sm" : "default"}
               >
                 <FileText className="mr-2" size={isMobile ? 16 : 18} />
@@ -283,7 +283,7 @@ const Index = () => {
                   <Button
                     variant="secondary"
                     size={isMobile ? "sm" : "default"}
-                    className="text-eduLight"
+                    className="text-foreground"
                   >
                     <BarChart2 className="mr-2" size={isMobile ? 16 : 18} />
                     Traffic
@@ -295,7 +295,7 @@ const Index = () => {
                 onClick={() => setShowSettings(true)}
                 variant="ghost"
                 size={isMobile ? "sm" : "icon"}
-                className="text-eduLight"
+                className="text-foreground"
                 title="Settings"
               >
                 {isMobile ? (
@@ -309,7 +309,7 @@ const Index = () => {
               {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size={isMobile ? "sm" : "icon"} className="text-eduLight">
+                    <Button variant="ghost" size={isMobile ? "sm" : "icon"} className="text-foreground">
                       {isMobile ? (
                         <>
                           <User className="mr-2" size={16} />
@@ -353,7 +353,7 @@ const Index = () => {
         <main>
           {isLoading ? (
             <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-eduAccent"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
             </div>
           ) : (
             <>
@@ -381,6 +381,7 @@ const Index = () => {
                               setBlogToEdit(blog);
                               setShowBlogCreator(true);
                             }}
+                            title="Edit blog"
                           >
                             <Edit size={14} />
                           </Button>
@@ -392,6 +393,7 @@ const Index = () => {
                               e.stopPropagation();
                               setBlogToDelete(blog.id);
                             }}
+                            title="Delete blog"
                           >
                             <Trash2 size={14} />
                           </Button>
@@ -419,7 +421,7 @@ const Index = () => {
               {/* User's Local Blogs (if user is logged in but not a developer) */}
               {user && !isDeveloper && userLocalBlogs.length > 0 && (
                 <div className="mt-10">
-                  <h2 className="text-xl font-bold text-eduLight mb-4">Your Personal Blogs</h2>
+                  <h2 className="text-xl font-bold text-foreground mb-4">Your Personal Blogs</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
                     {userLocalBlogs.map((blog) => (
                       <BlogCard

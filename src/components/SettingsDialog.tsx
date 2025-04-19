@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { X, Settings, MonitorSmartphone, PaintBucket, Download, Upload, Info, Trash2, Database } from 'lucide-react';
+import { X, Settings, MonitorSmartphone, PaintBucket, Download, Upload, Info, Trash2, Database, Sun, Moon, Monitor } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface SettingsDialogProps {
@@ -79,11 +79,17 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onOpenChange }) =
     
     if (theme === 'dark') {
       root.classList.add('dark');
+      document.body.style.setProperty('--background-color', '#1A1F2C');
+      document.body.style.setProperty('--text-color', '#F1F0FB');
     } else if (theme === 'light') {
       root.classList.add('light');
+      document.body.style.setProperty('--background-color', '#F1F0FB');
+      document.body.style.setProperty('--text-color', '#1A1F2C');
     } else if (theme === 'system') {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       root.classList.add(prefersDark ? 'dark' : 'light');
+      document.body.style.setProperty('--background-color', prefersDark ? '#1A1F2C' : '#F1F0FB');
+      document.body.style.setProperty('--text-color', prefersDark ? '#F1F0FB' : '#1A1F2C');
     }
   };
   
@@ -202,7 +208,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onOpenChange }) =
       <div className="text-sm">
         <p className="font-medium mb-1">Learning Lab v1.0.0</p>
         <p>Created by AR Labs</p>
-        <p className="text-xs mt-1 text-muted-foreground">© 2025 All rights reserved</p>
+        <p className="text-xs mt-1 text-muted-foreground">© {new Date().getFullYear()} All rights reserved</p>
       </div>,
       {
         duration: 5000,
@@ -238,9 +244,24 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onOpenChange }) =
                 <SelectValue placeholder="Select theme" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="dark">Dark</SelectItem>
-                <SelectItem value="light">Light</SelectItem>
-                <SelectItem value="system">System</SelectItem>
+                <SelectItem value="dark" className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <Moon size={14} />
+                    <span>Dark</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="light" className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <Sun size={14} />
+                    <span>Light</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="system" className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <Monitor size={14} />
+                    <span>System</span>
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>

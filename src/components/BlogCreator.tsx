@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,6 +10,7 @@ import DevicePreview from './DevicePreview';
 import { BlogService } from '@/services/BlogService';
 import { marked } from 'marked';
 import { Blog } from '@/integrations/supabase/client';
+import BlogEditorUtils from './BlogEditorUtils';
 
 interface BlogCreatorProps {
   onClose: () => void;
@@ -33,6 +35,7 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
   const [imageUrl, setImageUrl] = useState('');
   const [previewHtml, setPreviewHtml] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
   
   useEffect(() => {
     if (blogToEdit) {
@@ -65,8 +68,8 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
     }
   };
 
-  const insertFormatting = (format: string) => {
-    const textArea = document.getElementById('content-area') as HTMLTextAreaElement;
+  const insertFormatting = (format: string, customContent?: string) => {
+    const textArea = textAreaRef.current;
     if (!textArea) {
       toast.error('Text editor not found');
       return;
@@ -79,6 +82,11 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
     let newText = content;
     
     switch(format) {
+      case 'custom-table':
+        if (customContent) {
+          newText = content.substring(0, start) + customContent + content.substring(end);
+        }
+        break;
       case 'bold':
         newText = content.substring(0, start) + `**${selectedText || 'bold text'}**` + content.substring(end);
         break;
@@ -91,6 +99,9 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
       case 'list':
         newText = content.substring(0, start) + `\n- ${selectedText || 'List item'}` + content.substring(end);
         break;
+      case 'ordered-list':
+        newText = content.substring(0, start) + `\n1. ${selectedText || 'List item'}` + content.substring(end);
+        break;
       case 'image':
         newText = content.substring(0, start) + `![${selectedText || 'Image description'}](image-url)` + content.substring(end);
         break;
@@ -102,6 +113,14 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
         break;
       case 'fillblank':
         newText = content.substring(0, start) + `___${selectedText || ''}___` + content.substring(end);
+        break;
+      case 'code':
+        newText = content.substring(0, start) + 
+        "\n```javascript\n" + (selectedText || "// Your code here") + "\n```\n" + 
+        content.substring(end);
+        break;
+      case 'quote':
+        newText = content.substring(0, start) + `\n> ${selectedText || 'Quoted text'}\n` + content.substring(end);
         break;
       case 'table':
         newText = content.substring(0, start) + 
@@ -289,36 +308,6 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
               </SelectContent>
             </Select>
           </div>
-          
-          <div className="flex items-center space-x-2 bg-secondary/60 p-1 rounded-md overflow-x-auto">
-            <Button variant="ghost" size="icon" onClick={() => insertFormatting('bold')} title="Bold">
-              <Bold size={18} />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => insertFormatting('italic')} title="Italic">
-              <Italic size={18} />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => insertFormatting('heading')} title="Heading">
-              <Heading size={18} />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => insertFormatting('list')} title="List">
-              <List size={18} />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => insertFormatting('image')} title="Image">
-              <Image size={18} />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => insertFormatting('link')} title="Link">
-              <Link size={18} />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => insertFormatting('checkbox')} title="Checkbox">
-              <Check size={18} />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => insertFormatting('fillblank')} title="Fill in the blank">
-              <Type size={18} />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => insertFormatting('table')} title="Insert Table">
-              <Table size={18} />
-            </Button>
-          </div>
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
@@ -329,9 +318,12 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
           </TabsList>
           
           <TabsContent value="write" className="mt-4">
+            <BlogEditorUtils onFormatInsert={insertFormatting} content={content} />
+            
             <textarea
               id="content-area"
-              className="content-area w-full"
+              ref={textAreaRef}
+              className="content-area w-full mt-4"
               rows={15}
               value={content}
               onChange={(e) => setContent(e.target.value)}
