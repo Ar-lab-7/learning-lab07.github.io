@@ -2,123 +2,113 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-export type TrafficData = {
-  id: string;
-  page_url: string;
-  referrer?: string;
-  user_agent?: string;
-  browser?: string;
-  os?: string;
-  device?: string;
-  country?: string;
-  city?: string;
-  ip?: string;  // Add the missing ip property
-  created_at: string;
-};
-
-export type TrafficStats = {
-  totalViews: number;
-  uniqueVisitors: number;
-  byDevice: Record<string, number>;
-  byBrowser: Record<string, number>;
-  byPage: Record<string, number>;
-  byDate: Record<string, number>;
-};
+// Website ID for the Learning Lab
+const WEBSITE_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 export const TrafficService = {
-  // Record a pageview
-  recordPageview: async (): Promise<void> => {
+  recordPageview: async () => {
     try {
-      const websiteId = 'learning-lab'; // Default ID for this app
-      const pageUrl = window.location.pathname;
-      const referrer = document.referrer;
-      const userAgent = navigator.userAgent;
+      const { data, error } = await supabase.rpc('record_pageview', {
+        site_id: WEBSITE_ID,
+        page_url: window.location.pathname,
+        referrer: document.referrer || 'direct',
+        user_agent: navigator.userAgent
+      });
 
-      // Only record page views if not in development mode
-      if (process.env.NODE_ENV !== 'development') {
-        await supabase.rpc('record_pageview', {
-          site_id: websiteId,
-          page_url: pageUrl, 
-          referrer: referrer,
-          user_agent: userAgent
-        });
+      if (error) {
+        console.error('Error recording pageview:', error);
+      } else {
+        console.log('Pageview recorded successfully:', data);
       }
     } catch (error) {
-      console.error('Error recording pageview:', error);
+      console.error('Failed to record pageview:', error);
     }
   },
 
-  // Get traffic data
-  getTrafficData: async (): Promise<TrafficData[]> => {
+  getPageviews: async (period: 'today' | 'week' | 'month' | 'all' = 'all') => {
     try {
-      const { data, error } = await supabase
-        .from('pageviews')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1000);
-
+      let query = supabase.from('pageviews').select('*');
+      
+      // Add time filter based on period
+      const now = new Date();
+      if (period === 'today') {
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+        query = query.gte('created_at', today);
+      } else if (period === 'week') {
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        query = query.gte('created_at', weekAgo);
+      } else if (period === 'month') {
+        const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate()).toISOString();
+        query = query.gte('created_at', monthAgo);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
+      
       if (error) {
-        console.error('Error fetching traffic data:', error);
+        console.error('Error fetching pageviews:', error);
         toast.error('Failed to fetch traffic data');
         return [];
       }
-
+      
       return data || [];
     } catch (error) {
-      console.error('Error in getTrafficData:', error);
+      console.error('Error in getPageviews:', error);
       toast.error('Failed to fetch traffic data');
       return [];
     }
   },
-
-  // Get traffic statistics
-  getTrafficStats: async (): Promise<TrafficStats> => {
+  
+  getBrowserStats: async () => {
     try {
-      const trafficData = await TrafficService.getTrafficData();
+      const { data, error } = await supabase
+        .from('pageviews')
+        .select('browser, count')
+        .not('browser', 'is', null)
+        .then(result => ({
+          ...result,
+          data: result.data?.reduce((acc, item) => {
+            const browser = item.browser || 'Unknown';
+            acc[browser] = (acc[browser] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>)
+        }));
       
-      // Calculate statistics
-      const stats: TrafficStats = {
-        totalViews: trafficData.length,
-        uniqueVisitors: new Set(trafficData.map(item => item.ip)).size,
-        byDevice: {},
-        byBrowser: {},
-        byPage: {},
-        byDate: {},
-      };
-
-      // Process data for charts
-      trafficData.forEach(item => {
-        // By device
-        if (item.device) {
-          stats.byDevice[item.device] = (stats.byDevice[item.device] || 0) + 1;
-        }
-
-        // By browser
-        if (item.browser) {
-          stats.byBrowser[item.browser] = (stats.byBrowser[item.browser] || 0) + 1;
-        }
-
-        // By page
-        const page = item.page_url || 'unknown';
-        stats.byPage[page] = (stats.byPage[page] || 0) + 1;
-
-        // By date
-        const date = new Date(item.created_at).toLocaleDateString();
-        stats.byDate[date] = (stats.byDate[date] || 0) + 1;
-      });
-
-      return stats;
+      if (error) {
+        console.error('Error fetching browser stats:', error);
+        return {};
+      }
+      
+      return data || {};
     } catch (error) {
-      console.error('Error in getTrafficStats:', error);
-      toast.error('Failed to calculate traffic statistics');
-      return {
-        totalViews: 0,
-        uniqueVisitors: 0,
-        byDevice: {},
-        byBrowser: {},
-        byPage: {},
-        byDate: {},
-      };
+      console.error('Error in getBrowserStats:', error);
+      return {};
+    }
+  },
+  
+  getDeviceStats: async () => {
+    try {
+      const { data, error } = await supabase
+        .from('pageviews')
+        .select('device, count')
+        .not('device', 'is', null)
+        .then(result => ({
+          ...result,
+          data: result.data?.reduce((acc, item) => {
+            const device = item.device || 'Unknown';
+            acc[device] = (acc[device] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>)
+        }));
+      
+      if (error) {
+        console.error('Error fetching device stats:', error);
+        return {};
+      }
+      
+      return data || {};
+    } catch (error) {
+      console.error('Error in getDeviceStats:', error);
+      return {};
     }
   }
 };

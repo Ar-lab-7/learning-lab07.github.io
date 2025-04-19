@@ -9,7 +9,7 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
-    autoRefreshToken: false,
+    autoRefreshToken: true,
     storage: localStorage
   }
 });
@@ -46,6 +46,35 @@ export const validateDeveloperLogin = async (username: string, password: string)
     return null;
   }
 
+  // Authenticate with Supabase
+  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+    email: `${username}@learninglab.dev`,
+    password: developerPassword
+  });
+
+  if (authError || !authData.user) {
+    console.error('Authentication error:', authError);
+    
+    // If user doesn't exist, create one
+    if (authError?.message.includes('Invalid login credentials')) {
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: `${username}@learninglab.dev`,
+        password: developerPassword
+      });
+      
+      if (signUpError) {
+        console.error('Sign up error:', signUpError);
+        return null;
+      }
+      
+      if (signUpData.user) {
+        console.log('New developer account created');
+      }
+    } else {
+      return null;
+    }
+  }
+
   // Check if developer profile exists in the database
   const { data, error } = await supabase
     .from('profiles')
@@ -55,6 +84,7 @@ export const validateDeveloperLogin = async (username: string, password: string)
     .single();
 
   if (error || !data) {
+    console.error('Profile fetch error:', error);
     return null;
   }
 

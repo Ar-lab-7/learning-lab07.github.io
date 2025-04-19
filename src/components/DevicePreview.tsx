@@ -44,7 +44,7 @@ const DevicePreview: React.FC<DevicePreviewProps> = ({ contentHtml }) => {
         </TabsList>
       </Tabs>
       
-      <div className={`border bg-white rounded-md overflow-hidden transition-all ${getDeviceClass()}`}>
+      <div className={`border rounded-md overflow-hidden transition-all ${getDeviceClass()}`}>
         <div className="h-full overflow-auto">
           <iframe
             title="Content Preview"
@@ -60,34 +60,92 @@ const DevicePreview: React.FC<DevicePreviewProps> = ({ contentHtml }) => {
                       padding: 20px;
                       line-height: 1.6;
                       max-width: 100%;
+                      color: #F1F0FB;
+                      background-color: #1A1F2C;
                     }
                     img {
                       max-width: 100%;
                       height: auto;
+                      border-radius: 0.5rem;
                     }
                     pre {
-                      background: #f4f4f4;
-                      padding: 10px;
-                      border-radius: 4px;
+                      background: rgba(0, 0, 0, 0.3);
+                      padding: 16px;
+                      border-radius: 6px;
                       overflow-x: auto;
+                      margin: 12px 0;
                     }
-                    h1, h2, h3, h4, h5, h6 {
+                    code {
+                      background: rgba(0, 0, 0, 0.2);
+                      padding: 2px 4px;
+                      border-radius: 4px;
+                      color: #1EAEDB;
+                    }
+                    h1 {
+                      font-size: 2rem;
+                      font-weight: 700;
+                      margin-bottom: 1rem;
+                      line-height: 1.2;
+                    }
+                    h2, h3, h4, h5, h6 {
                       margin-top: 1.5em;
                       margin-bottom: 0.5em;
+                      color: #F1F0FB;
+                    }
+                    h2 {
+                      font-size: 1.5rem;
+                      font-weight: 600;
+                    }
+                    h3 {
+                      font-size: 1.25rem;
+                      font-weight: 500;
+                    }
+                    p {
+                      margin: 0.5rem 0;
+                    }
+                    a {
+                      color: #1EAEDB;
+                      text-decoration: none;
+                    }
+                    a:hover {
+                      text-decoration: underline;
                     }
                     table {
                       border-collapse: collapse;
                       width: 100%;
+                      margin: 16px 0;
                     }
                     th, td {
-                      border: 1px solid #ddd;
-                      padding: 8px;
+                      border: 1px solid rgba(255, 255, 255, 0.2);
+                      padding: 8px 12px;
+                      text-align: left;
+                    }
+                    th {
+                      background: rgba(255, 255, 255, 0.05);
+                    }
+                    ul, ol {
+                      margin: 8px 0;
+                      padding-left: 24px;
+                    }
+                    li {
+                      margin: 4px 0;
                     }
                     blockquote {
-                      border-left: 4px solid #ddd;
+                      border-left: 4px solid #D6BCFA;
                       padding-left: 16px;
                       margin-left: 0;
+                      margin-right: 0;
                       font-style: italic;
+                      color: rgba(241, 240, 251, 0.8);
+                    }
+                    hr {
+                      border: none;
+                      height: 1px;
+                      background: rgba(255, 255, 255, 0.1);
+                      margin: 24px 0;
+                    }
+                    input[type="checkbox"] {
+                      margin-right: 8px;
                     }
                   </style>
                 </head>

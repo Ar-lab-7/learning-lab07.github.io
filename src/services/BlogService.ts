@@ -50,7 +50,7 @@ export const BlogService = {
 
       if (error) {
         console.error('Error creating blog:', error);
-        toast.error('Failed to create blog');
+        toast.error(`Failed to create blog: ${error.message}`);
         return null;
       }
 
@@ -97,7 +97,7 @@ export const BlogService = {
 
       if (error) {
         console.error('Error updating blog:', error);
-        toast.error('Failed to update blog');
+        toast.error(`Failed to update blog: ${error.message}`);
         return null;
       }
 
@@ -127,7 +127,7 @@ export const BlogService = {
 
       if (error) {
         console.error('Error deleting blog:', error);
-        toast.error('Failed to delete blog');
+        toast.error(`Failed to delete blog: ${error.message}`);
         return false;
       }
 
