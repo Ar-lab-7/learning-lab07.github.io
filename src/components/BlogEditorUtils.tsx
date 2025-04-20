@@ -6,7 +6,7 @@ import BlogEditorTable from './BlogEditorTable';
 import { Bold, Italic, List, Image, Link, Heading, Check, Type, AlignLeft, Table, FileText, Quote, ListOrdered, Code } from 'lucide-react';
 
 interface BlogEditorUtilsProps {
-  onFormatInsert: (format: string) => void;
+  onFormatInsert: (format: string, customContent?: string) => void;
   content: string;
 }
 
