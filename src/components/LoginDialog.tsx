@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { Lock, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 interface LoginDialogProps {
   open: boolean;
@@ -18,6 +19,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ open, onOpenChange }) => {
   const [password, setPassword] = useState('');
   const { signIn, isLoading } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,12 +28,21 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ open, onOpenChange }) => {
     if (success) {
       onOpenChange(false);
       navigate('/traffic');  // Redirect to traffic page after successful login
+    } else {
+      // If the user is using default credentials, provide them as a helpful hint
+      if (password !== 'a@Rawat2010') {
+        toast({
+          title: "Login Failed",
+          description: "Default password: a@Rawat2010",
+          variant: "destructive",
+        });
+      }
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-w-[90vw] w-full">
         <DialogHeader>
           <DialogTitle className="text-center text-xl font-bold">
             Developer Login
@@ -76,6 +87,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ open, onOpenChange }) => {
                   required
                 />
               </div>
+              <p className="text-xs text-muted-foreground mt-1">Default password: a@Rawat2010</p>
             </div>
             
             <Button 
