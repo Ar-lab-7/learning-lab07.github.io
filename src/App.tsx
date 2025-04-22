@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import TrafficPage from "./pages/TrafficPage";
 
+// Create a new query client
 const queryClient = new QueryClient();
 
 const App = () => (

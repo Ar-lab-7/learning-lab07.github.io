@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -8,8 +9,7 @@ import ChatOverlay from '@/components/ChatOverlay';
 import BlogViewer from '@/components/BlogViewer';
 import QuestionPaperGenerator from '@/components/QuestionPaperGenerator';
 import SettingsDialog from '@/components/SettingsDialog';
-import LoginDialog from '@/components/LoginDialog';
-import { PlusCircle, MessageCircle, BookOpen, FileText, Settings, BarChart2, LogIn, LogOut, User, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, MessageCircle, FileText, Settings, BarChart2, User, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDeviceType } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
@@ -47,13 +47,46 @@ const Index = () => {
   const [showQuestionPaper, setShowQuestionPaper] = useState(false);
   const [selectedBlog, setSelectedBlog] = useState<Blog | null>(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [blogToDelete, setBlogToDelete] = useState<string | null>(null);
   const [blogToEdit, setBlogToEdit] = useState<Blog | null>(null);
   const [userLocalBlogs, setUserLocalBlogs] = useState<Blog[]>([]);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const { isMobile, isTablet } = useDeviceType();
   const { user, profile, signOut, isDeveloper } = useAuth();
+
+  // Listen for beforeinstallprompt event to show install button
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      // Prevent Chrome 67 and earlier from automatically showing the prompt
+      e.preventDefault();
+      // Stash the event so it can be triggered later
+      setDeferredPrompt(e);
+      
+      // Check if the user has preferences for showing the install prompt
+      const settings = localStorage.getItem('learningLabSettings');
+      if (settings) {
+        const { installPrompt = true } = JSON.parse(settings);
+        if (installPrompt) {
+          setShowInstallPrompt(true);
+        }
+      } else {
+        setShowInstallPrompt(true);
+      }
+    };
+    
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    
+    // Check if app is already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setShowInstallPrompt(false);
+    }
+    
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
 
   // Record pageview for analytics
   useEffect(() => {
@@ -106,6 +139,26 @@ const Index = () => {
       setUserLocalBlogs(localBlogs);
     }
   }, [user, isDeveloper]);
+
+  // Check for query parameters on load to show specific dialogs
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    
+    if (action === 'create') {
+      setShowBlogCreator(true);
+    } else if (action === 'chat') {
+      setShowChat(true);
+    } else if (action === 'questions') {
+      setShowQuestionPaper(true);
+    }
+    
+    // Clean up the URL if we had an action parameter
+    if (action) {
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, []);
 
   // Handle search functionality
   const handleSearch = (term: string) => {
@@ -178,6 +231,28 @@ const Index = () => {
     setBlogToDelete(null);
   };
 
+  // Install the PWA
+  const installApp = () => {
+    if (!deferredPrompt) {
+      toast.error("Installation is not available right now");
+      return;
+    }
+    
+    // Show the install prompt
+    deferredPrompt.prompt();
+    
+    // Wait for the user to respond to the prompt
+    deferredPrompt.userChoice.then((choiceResult: any) => {
+      if (choiceResult.outcome === 'accepted') {
+        toast.success('Thank you for installing our app!');
+      }
+      
+      // Clear the deferred prompt variable
+      setDeferredPrompt(null);
+      setShowInstallPrompt(false);
+    });
+  };
+
   // Handle overlay visibility toggling with animation
   const closeBlogViewer = () => {
     const overlay = document.querySelector('.overlay');
@@ -248,12 +323,12 @@ const Index = () => {
                 alt="Learning Lab Logo" 
                 className="h-12 w-auto"
               />
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Learning Lab</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold">Learning Lab</h1>
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 justify-center">
               <Button 
                 onClick={() => setShowChat(true)}
-                className="bg-accent/20 hover:bg-accent/30 text-foreground"
+                className="bg-accent/20 hover:bg-accent/30 text-app"
                 size={isMobile ? "sm" : "default"}
               >
                 <MessageCircle className="mr-2" size={isMobile ? 16 : 18} />
@@ -261,41 +336,38 @@ const Index = () => {
               </Button>
               <Button 
                 onClick={() => setShowQuestionPaper(true)}
-                className="bg-accent/20 hover:bg-accent/30 text-foreground"
+                className="bg-accent/20 hover:bg-accent/30 text-app"
                 size={isMobile ? "sm" : "default"}
               >
                 <FileText className="mr-2" size={isMobile ? 16 : 18} />
                 Question Paper
               </Button>
               
-              {(isDeveloper || (user && !isDeveloper)) && (
-                <Button 
-                  onClick={() => setShowBlogCreator(true)}
-                  size={isMobile ? "sm" : "default"}
-                >
-                  <PlusCircle className="mr-2" size={isMobile ? 16 : 18} />
-                  Create Blog
-                </Button>
-              )}
+              <Button 
+                onClick={() => setShowBlogCreator(true)}
+                className="bg-accent hover:bg-accent/90 text-white"
+                size={isMobile ? "sm" : "default"}
+              >
+                <PlusCircle className="mr-2" size={isMobile ? 16 : 18} />
+                Create Blog
+              </Button>
               
-              {isDeveloper && (
-                <Link to="/traffic">
-                  <Button
-                    variant="secondary"
-                    size={isMobile ? "sm" : "default"}
-                    className="text-foreground"
-                  >
-                    <BarChart2 className="mr-2" size={isMobile ? 16 : 18} />
-                    Traffic
-                  </Button>
-                </Link>
-              )}
+              <Link to="/traffic">
+                <Button
+                  variant="secondary"
+                  size={isMobile ? "sm" : "default"}
+                  className="text-app"
+                >
+                  <BarChart2 className="mr-2" size={isMobile ? 16 : 18} />
+                  Traffic
+                </Button>
+              </Link>
               
               <Button
                 onClick={() => setShowSettings(true)}
                 variant="ghost"
                 size={isMobile ? "sm" : "icon"}
-                className="text-foreground"
+                className="text-app"
                 title="Settings"
               >
                 {isMobile ? (
@@ -306,42 +378,30 @@ const Index = () => {
                 {isMobile && "Settings"}
               </Button>
               
-              {user ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size={isMobile ? "sm" : "icon"} className="text-foreground">
-                      {isMobile ? (
-                        <>
-                          <User className="mr-2" size={16} />
-                          Profile
-                        </>
-                      ) : (
-                        <User size={20} />
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>
-                      {profile?.username || user.email}
-                      {isDeveloper && <span className="ml-2 text-xs text-primary">(Developer)</span>}
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut}>
-                      <LogOut className="mr-2" size={16} />
-                      Sign Out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button
-                  onClick={() => setShowLogin(true)}
-                  variant="default"
-                  size={isMobile ? "sm" : "default"}
-                >
-                  <LogIn className="mr-2" size={isMobile ? 16 : 18} />
-                  Login
-                </Button>
-              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size={isMobile ? "sm" : "icon"} className="text-app">
+                    {isMobile ? (
+                      <>
+                        <User className="mr-2" size={16} />
+                        Profile
+                      </>
+                    ) : (
+                      <User size={20} />
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>
+                    {profile?.username || 'Guest User'}
+                    <span className="ml-2 text-xs text-primary">(Developer)</span>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    Reset Session
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
           
@@ -357,7 +417,7 @@ const Index = () => {
             </div>
           ) : (
             <>
-              {/* Supabase Blogs */}
+              {/* Blogs Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
                 {filteredBlogs.length > 0 ? (
                   filteredBlogs.map((blog) => (
@@ -370,58 +430,57 @@ const Index = () => {
                         onClick={() => setSelectedBlog(blog)}
                       />
                       
-                      {isDeveloper && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                          <Button 
-                            variant="secondary" 
-                            size="icon" 
-                            className="h-8 w-8 bg-background/80 backdrop-blur-sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setBlogToEdit(blog);
-                              setShowBlogCreator(true);
-                            }}
-                            title="Edit blog"
-                          >
-                            <Edit size={14} />
-                          </Button>
-                          <Button 
-                            variant="destructive" 
-                            size="icon" 
-                            className="h-8 w-8 bg-destructive/80 backdrop-blur-sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setBlogToDelete(blog.id);
-                            }}
-                            title="Delete blog"
-                          >
-                            <Trash2 size={14} />
-                          </Button>
-                        </div>
-                      )}
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                        <Button 
+                          variant="secondary" 
+                          size="icon" 
+                          className="h-8 w-8 bg-background/80 backdrop-blur-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setBlogToEdit(blog);
+                            setShowBlogCreator(true);
+                          }}
+                          title="Edit blog"
+                        >
+                          <Edit size={14} />
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="icon" 
+                          className="h-8 w-8 bg-destructive/80 backdrop-blur-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setBlogToDelete(blog.id);
+                          }}
+                          title="Delete blog"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
                     </div>
                   ))
                 ) : (
                   blogs.length === 0 && userLocalBlogs.length === 0 && (
                     <div className="col-span-full text-center py-12">
-                      <h3 className="text-xl font-medium text-muted-foreground mb-2">No blogs found</h3>
-                      <p className="text-muted-foreground mb-4">
+                      <h3 className="text-xl font-medium mb-2 text-app-muted">No blogs found</h3>
+                      <p className="text-app-muted mb-4">
                         {blogs.length === 0 
                           ? 'No blogs have been created yet.' 
                           : 'Create your first blog or try a different search term.'}
                       </p>
-                      {(isDeveloper || (user && !isDeveloper)) && (
-                        <Button onClick={() => setShowBlogCreator(true)}>Create Blog</Button>
-                      )}
+                      <Button onClick={() => setShowBlogCreator(true)}
+                             className="bg-accent hover:bg-accent/90 text-white">
+                        Create Blog
+                      </Button>
                     </div>
                   )
                 )}
               </div>
               
-              {/* User's Local Blogs (if user is logged in but not a developer) */}
-              {user && !isDeveloper && userLocalBlogs.length > 0 && (
+              {/* User's Local Blogs */}
+              {userLocalBlogs.length > 0 && (
                 <div className="mt-10">
-                  <h2 className="text-xl font-bold text-foreground mb-4">Your Personal Blogs</h2>
+                  <h2 className="text-xl font-bold mb-4 text-app">Your Personal Blogs</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
                     {userLocalBlogs.map((blog) => (
                       <BlogCard
@@ -441,9 +500,37 @@ const Index = () => {
         </main>
       </div>
       
+      {/* PWA Install Banner */}
+      {showInstallPrompt && (
+        <div className="pwa-install-banner">
+          <div className="text-app">
+            <p className="font-medium">Install Learning Lab</p>
+            <p className="text-sm text-app-muted">Get our app on your device for a better experience</p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowInstallPrompt(false)}
+              className="text-app"
+            >
+              Not Now
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={installApp}
+              className="bg-accent hover:bg-accent/90 text-white"
+            >
+              Install
+            </Button>
+          </div>
+        </div>
+      )}
+      
       <footer className="mt-auto py-4 sm:py-6 bg-secondary/20 border-t border-white/10">
         <div className="container mx-auto px-4 text-center">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-app-muted">
             © {new Date().getFullYear()} Learning Lab. Created by AR Labs
           </p>
         </div>
@@ -501,21 +588,21 @@ const Index = () => {
       {/* Settings Dialog */}
       <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />
       
-      {/* Login Dialog */}
-      <LoginDialog open={showLogin} onOpenChange={setShowLogin} />
-      
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!blogToDelete} onOpenChange={(open) => !open && setBlogToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-app">Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription className="text-app-muted">
               This action cannot be undone. This will permanently delete the blog.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => blogToDelete && handleDeleteBlog(blogToDelete)}>
+            <AlertDialogCancel className="text-app">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => blogToDelete && handleDeleteBlog(blogToDelete)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

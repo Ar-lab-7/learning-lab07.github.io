@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserProfile, validateDeveloperLogin, supabase } from '@/integrations/supabase/client';
+import { UserProfile, supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface AuthContextType {
@@ -8,7 +8,6 @@ interface AuthContextType {
   user: any | null;
   isLoading: boolean;
   isDeveloper: boolean;
-  signIn: (username: string, password: string) => Promise<boolean>;
   signOut: () => void;
 }
 
@@ -17,100 +16,38 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDeveloper, setIsDeveloper] = useState(false);
+  const [isDeveloper, setIsDeveloper] = useState(true); // Always true - everyone is a developer
   
-  // Check for existing session on startup
+  // Create a default user profile on startup
   useEffect(() => {
-    // First set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === 'SIGNED_OUT') {
-          setProfile(null);
-          setIsDeveloper(false);
-        } else if (session) {
-          // When signed in, fetch the profile data
-          setTimeout(async () => {
-            const { data } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-            
-            if (data) {
-              setProfile(data);
-              setIsDeveloper(data.is_developer);
-            }
-          }, 0);
-        }
-      }
-    );
-    
-    // Then check for existing session
-    const checkSession = async () => {
+    const setupDefaultUser = async () => {
       try {
-        const { data } = await supabase.auth.getSession();
+        // Create a default profile for all users
+        const defaultProfile: UserProfile = {
+          id: 'default-user-id',
+          username: 'Guest User',
+          is_developer: true
+        };
         
-        if (data.session) {
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', data.session.user.id)
-            .single();
-            
-          if (profileData) {
-            setProfile(profileData);
-            setIsDeveloper(profileData.is_developer);
-          }
-        }
+        setProfile(defaultProfile);
+        setIsDeveloper(true);
       } catch (error) {
-        console.error('Error checking session:', error);
+        console.error('Error setting up default user:', error);
       } finally {
         setIsLoading(false);
       }
     };
     
-    checkSession();
-    
-    return () => {
-      subscription.unsubscribe();
-    };
+    setupDefaultUser();
   }, []);
 
-  const signIn = async (username: string, password: string): Promise<boolean> => {
-    setIsLoading(true);
-    try {
-      const userProfile = await validateDeveloperLogin(username, password);
-      
-      if (userProfile) {
-        setProfile(userProfile);
-        setIsDeveloper(userProfile.is_developer);
-        toast.success('Successfully logged in');
-        return true;
-      } else {
-        toast.error('Login failed. Please try again.');
-        return false;
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      toast.error('Login failed. Please try again.');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const signOut = async () => {
-    setIsLoading(true);
     try {
-      await supabase.auth.signOut();
-      setProfile(null);
-      setIsDeveloper(false);
-      toast.success('Signed out successfully');
+      // Just reset to default state since we're not really signing out
+      toast.success('Session reset successfully');
     } catch (error) {
-      console.error('Sign out error:', error);
-      toast.error('Failed to sign out');
-    } finally {
-      setIsLoading(false);
+      console.error('Reset error:', error);
+      toast.error('Failed to reset session');
     }
   };
 
@@ -119,7 +56,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user: profile,
     isLoading,
     isDeveloper,
-    signIn,
     signOut,
   };
 

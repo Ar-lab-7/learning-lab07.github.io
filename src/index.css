@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
@@ -7,7 +6,7 @@
 
 @layer base {
   :root {
-    /* Light theme - improved for better contrast */
+    /* Light theme - improved for better contrast and visibility */
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
@@ -37,7 +36,7 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 240 4.9% 83.9%;
 
-    --background-color: #F1F0FB;
+    --background-color: #F9F9FF;
     --text-color: #1A1F2C;
     --card-bg: #FFFFFF;
     --button-text: #FFFFFF;
@@ -45,6 +44,8 @@
     --link-color: #7E69AB;
     --chart-grid: #8E9196;
     --input-border: rgba(26, 31, 44, 0.2);
+    --button-bg: #9A77CF;
+    --highlight-color: #8B5CF6;
   }
 
   .dark {
@@ -77,6 +78,8 @@
     --link-color: #9A77CF;
     --chart-grid: #8E9196;
     --input-border: rgba(241, 240, 251, 0.2);
+    --button-bg: #9A77CF;
+    --highlight-color: #D6BCFA;
   }
 }
 
@@ -130,29 +133,42 @@
 
   /* Responsive heading sizes with improved contrast */
   h1 {
-    @apply text-2xl md:text-3xl lg:text-4xl 4xl:text-5xl font-bold text-foreground;
+    @apply text-2xl md:text-3xl lg:text-4xl 4xl:text-5xl font-bold;
+    color: var(--text-color);
   }
 
   h2 {
-    @apply text-xl md:text-2xl lg:text-3xl 4xl:text-4xl font-semibold text-foreground;
+    @apply text-xl md:text-2xl lg:text-3xl 4xl:text-4xl font-semibold;
+    color: var(--text-color);
   }
 
   h3 {
-    @apply text-lg md:text-xl lg:text-2xl 4xl:text-3xl font-medium text-foreground;
+    @apply text-lg md:text-xl lg:text-2xl 4xl:text-3xl font-medium;
+    color: var(--text-color);
   }
 
   h4 {
-    @apply text-base md:text-lg lg:text-xl 4xl:text-2xl font-medium text-foreground;
+    @apply text-base md:text-lg lg:text-xl 4xl:text-2xl font-medium;
+    color: var(--text-color);
   }
 
-  /* Default text color - explicit for light mode */
+  /* Default text color - explicit for both modes */
   p, span, div {
-    @apply text-foreground;
+    color: var(--text-color);
   }
 
   /* Fix for components with built-in colors */
   button, a, input, textarea, select {
-    @apply text-foreground;
+    color: var(--text-color);
+  }
+
+  /* Button styles */
+  button.bg-eduAccent, button.bg-accent {
+    color: white;
+  }
+
+  .light button.bg-accent {
+    color: white;
   }
 
   /* Fix for Recharts text in both modes */
@@ -173,20 +189,41 @@
   /* Card styles that work in both themes */
   .card {
     background-color: var(--card-bg);
-    @apply rounded-lg shadow-md text-foreground border border-border/40;
+    @apply rounded-lg shadow-md border border-border/40;
+    color: var(--text-color);
   }
   
   /* Input styles with proper contrast */
   input, textarea, select {
     border-color: var(--input-border) !important;
     background-color: var(--background-color) !important;
+    color: var(--text-color) !important;
+  }
+
+  /* Light theme specific overrides for better contrast */
+  .light input, .light textarea, .light select {
+    color: var(--text-color) !important;
+    border-color: var(--input-border) !important;
+  }
+
+  .light .text-foreground {
+    color: var(--text-color) !important;
+  }
+
+  .light .bg-accent {
+    color: white !important;
+  }
+
+  .light label {
+    color: var(--text-color) !important;
   }
 }
 
 @layer components {
   /* Card styling with glass morphism */
   .chapter-card {
-    @apply relative rounded-lg backdrop-blur-md bg-card border border-border/40 shadow-lg transition-all duration-300 text-foreground;
+    @apply relative rounded-lg backdrop-blur-md bg-card border border-border/40 shadow-lg transition-all duration-300;
+    color: var(--text-color);
   }
 
   .chapter-card:hover {
@@ -204,7 +241,8 @@
   
   /* Content editing area */
   .content-area {
-    @apply p-5 rounded-lg bg-secondary/60 text-foreground font-sans min-h-[200px] focus:outline-none resize-none;
+    @apply p-5 rounded-lg bg-secondary/60 font-sans min-h-[200px] focus:outline-none resize-none;
+    color: var(--text-color);
   }
   
   /* Button with improved visibility in both themes */
@@ -217,7 +255,8 @@
   
   /* Glass panel */
   .glass {
-    @apply backdrop-blur-md border border-border/30 shadow-lg text-foreground;
+    @apply backdrop-blur-md border border-border/30 shadow-lg;
+    color: var(--text-color);
   }
 
   .light .glass {
@@ -246,12 +285,40 @@
   
   /* Stats number - new component */
   .stats-number {
-    @apply text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground;
+    @apply text-2xl sm:text-3xl lg:text-4xl font-bold;
+    color: var(--text-color);
   }
   
   /* Stats label - new component */
   .stats-label {
-    @apply text-sm text-foreground/70 font-medium;
+    @apply text-sm font-medium;
+    color: var(--text-color);
+    opacity: 0.7;
+  }
+
+  /* App specific components */
+  .app-button {
+    @apply py-2 px-4 rounded-lg transition-all duration-200 font-medium;
+    background-color: var(--button-bg);
+    color: var(--button-text);
+  }
+  
+  .app-button:hover {
+    @apply shadow-md;
+    background-color: var(--button-hover);
+  }
+
+  .app-card {
+    @apply p-5 rounded-xl shadow-lg border border-border/20;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+  }
+  
+  .app-input {
+    @apply px-4 py-2 rounded-lg border outline-none focus:ring-2 focus:ring-accent/50 w-full;
+    border-color: var(--input-border);
+    background-color: var(--background-color);
+    color: var(--text-color);
   }
 }
 
@@ -278,7 +345,8 @@
 
   /* Responsive text utilities */
   .text-responsive {
-    @apply text-sm sm:text-base lg:text-lg 4xl:text-xl text-foreground;
+    @apply text-sm sm:text-base lg:text-lg 4xl:text-xl;
+    color: var(--text-color);
   }
 
   /* Responsive spacing */
@@ -289,6 +357,20 @@
   /* Responsive flex utilities */
   .flex-responsive {
     @apply flex flex-col sm:flex-row;
+  }
+
+  /* Text color utilities for improved visibility */
+  .text-app {
+    color: var(--text-color) !important;
+  }
+  
+  .text-app-muted {
+    color: var(--text-color) !important;
+    opacity: 0.7;
+  }
+
+  .text-app-highlight {
+    color: var(--highlight-color) !important;
   }
 }
 
@@ -435,20 +517,22 @@ pre[class*="language-"] {
 
 /* Fix for login dialog in light mode */
 .light .Dialog {
-  @apply text-foreground bg-background;
+  color: var(--text-color);
+  background-color: var(--background-color);
 }
 
 .light input {
-  @apply text-foreground border-foreground/20;
+  color: var(--text-color);
+  border-color: var(--input-border);
 }
 
 .light button {
-  @apply text-foreground;
+  color: var(--text-color);
 }
 
 /* Light mode specific button */
 .light button.bg-eduAccent {
-  @apply text-white;
+  color: white;
 }
 
 /* Fix for chart tooltips in both modes */
@@ -470,4 +554,13 @@ pre[class*="language-"] {
 
 .dashboard-section {
   @apply p-4 sm:p-6 rounded-xl bg-card border border-border/30;
+}
+
+/* PWA installation prompts */
+.pwa-install-banner {
+  @apply fixed bottom-0 left-0 right-0 p-4 bg-card border-t border-border/30 shadow-lg z-50 flex justify-between items-center;
+}
+
+.pwa-install-button {
+  @apply py-1.5 px-3 rounded-full bg-eduAccent text-white font-medium;
 }
