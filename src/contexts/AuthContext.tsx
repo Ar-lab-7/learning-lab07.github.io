@@ -9,6 +9,7 @@ interface AuthContextType {
   isLoading: boolean;
   isDeveloper: boolean;
   signOut: () => void;
+  signIn: (username: string, password: string) => Promise<boolean>; // Added signIn method
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,12 +52,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Add a stub signIn method that always succeeds since we're bypassing login
+  const signIn = async (username: string, password: string): Promise<boolean> => {
+    try {
+      // Set the profile with the provided username
+      const userProfile: UserProfile = {
+        id: 'default-user-id',
+        username: username || 'Guest User',
+        is_developer: true
+      };
+      
+      setProfile(userProfile);
+      setIsDeveloper(true);
+      setIsLoading(false);
+      toast.success(`Welcome, ${username}!`);
+      return true;
+    } catch (error) {
+      console.error('Sign in error:', error);
+      toast.error('Failed to sign in');
+      return false;
+    }
+  };
+
   const value = {
     profile,
     user: profile,
     isLoading,
     isDeveloper,
     signOut,
+    signIn,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

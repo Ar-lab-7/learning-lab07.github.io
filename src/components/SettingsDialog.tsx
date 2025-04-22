@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -457,7 +456,6 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onOpenChange }) =
                 <Select 
                   value={settings.notificationLevel} 
                   onValueChange={(value: NotificationOption) => updateSetting('notificationLevel', value)}
-                  className="mt-1"
                 >
                   <SelectTrigger className="w-[140px] text-app h-8 text-xs">
                     <SelectValue placeholder="Level" />
