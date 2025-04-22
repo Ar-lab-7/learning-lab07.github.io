@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -377,31 +376,6 @@ const Index = () => {
                 )}
                 {isMobile && "Settings"}
               </Button>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size={isMobile ? "sm" : "icon"} className="text-app">
-                    {isMobile ? (
-                      <>
-                        <User className="mr-2" size={16} />
-                        Profile
-                      </>
-                    ) : (
-                      <User size={20} />
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>
-                    {profile?.username || 'Guest User'}
-                    <span className="ml-2 text-xs text-primary">(Developer)</span>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    Reset Session
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           </div>
           

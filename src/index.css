@@ -4,88 +4,81 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Base theme update for better readability/light+dark */
+/* 
+- Light theme: high contrast dark text, white backgrounds.
+- Dark theme: soft but readable backgrounds, strong white text.
+- Unified accent.
+*/
+
 @layer base {
   :root {
-    /* Light theme - improved for better contrast and visibility */
     --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --foreground: 240 10% 5%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 240 10% 5%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
+    --popover-foreground: 240 10% 5%;
+    --primary: 250 60% 55%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 267 68% 65%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
+    --secondary: 250 25% 93%;
+    --secondary-foreground: 240 10% 5%;
+    --muted: 250 25% 85%;
+    --muted-foreground: 240 5% 50%;
+    --accent: 264 88% 67%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 80% 62%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
+    --border: 250 20% 85%;
+    --input: 250 20% 90%;
+    --ring: 267 68% 65%;
     --radius: 0.75rem;
-    --sidebar-background: 240 10% 3.9%;
-    --sidebar-foreground: 240 5% 64.9%;
-    --sidebar-primary: 263.4 70% 86.7%;
-    --sidebar-primary-foreground: 240 10% 3.9%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 240 4.9% 83.9%;
-
-    --background-color: #F9F9FF;
-    --text-color: #1A1F2C;
-    --card-bg: #FFFFFF;
+    --background-color: #FFFFFF;
+    --text-color: #161826;
+    --card-bg: #F9F7FF;
     --button-text: #FFFFFF;
-    --button-hover: rgba(154, 119, 207, 0.9);
+    --button-hover: #7a59dd;
     --link-color: #7E69AB;
     --chart-grid: #8E9196;
-    --input-border: rgba(26, 31, 44, 0.2);
-    --button-bg: #9A77CF;
-    --highlight-color: #8B5CF6;
+    --input-border: #DDD9F4;
+    --button-bg: #6C45C5;
+    --highlight-color: #5732a2;
   }
 
   .dark {
-    /* Dark theme - refined for better contrast */
-    --background: 240 10% 3.9%;
+    --background: 240 13% 12%;
     --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
+    --card: 240 13% 15%;
     --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
+    --popover: 240 13% 14%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
+    --primary: 264 96% 80%;
+    --primary-foreground: 240 4% 16%;
+    --secondary: 250 17% 18%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 263 85% 85%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --muted: 240 10% 26%;
+    --muted-foreground: 240 10% 60%;
+    --accent: 264 88% 67%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 70% 45%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-
-    --background-color: #1A1F2C;
-    --text-color: #F1F0FB;
-    --card-bg: #2A2F3C;
-    --button-text: #FFFFFF;
-    --button-hover: rgba(154, 119, 207, 0.9);
-    --link-color: #9A77CF;
-    --chart-grid: #8E9196;
-    --input-border: rgba(241, 240, 251, 0.2);
-    --button-bg: #9A77CF;
-    --highlight-color: #D6BCFA;
+    --border: 240 13% 20%;
+    --input: 240 13% 20%;
+    --ring: 264 88% 67%;
+    --background-color: #17192b;
+    --text-color: #EFF2FC;
+    --card-bg: #24263a;
+    --button-text: #F6F6FF;
+    --button-hover: #a289fa;
+    --link-color: #bbaaff;
+    --chart-grid: #8889b6;
+    --input-border: #34355b;
+    --button-bg: #7D4AED;
+    --highlight-color: #E1AFFF;
   }
-}
 
-@layer base {
   * {
-    @apply border-border selection:bg-eduAccent/20 selection:text-foreground;
+    @apply border-border selection:bg-accent/10 selection:text-accent;
   }
   
   body {
@@ -96,74 +89,15 @@
     font-size: 16px;
   }
 
-  @media (max-width: 640px) {
-    body {
-      font-size: 14px;
-    }
-  }
-
-  @media (min-width: 1920px) {
-    body {
-      font-size: 18px;
-    }
-  }
-
-  @media (min-width: 2560px) {
-    body {
-      font-size: 20px;
-    }
-  }
-
   html {
     @apply scroll-smooth;
   }
-  
-  /* Improved scrollbars */
-  ::-webkit-scrollbar {
-    @apply w-2 h-2;
-  }
-  
-  ::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    @apply bg-eduAccent/30 rounded-full hover:bg-eduAccent/50 transition-colors;
-  }
 
-  /* Responsive heading sizes with improved contrast */
-  h1 {
-    @apply text-2xl md:text-3xl lg:text-4xl 4xl:text-5xl font-bold;
-    color: var(--text-color);
-  }
-
-  h2 {
-    @apply text-xl md:text-2xl lg:text-3xl 4xl:text-4xl font-semibold;
-    color: var(--text-color);
-  }
-
-  h3 {
-    @apply text-lg md:text-xl lg:text-2xl 4xl:text-3xl font-medium;
-    color: var(--text-color);
-  }
-
-  h4 {
-    @apply text-base md:text-lg lg:text-xl 4xl:text-2xl font-medium;
-    color: var(--text-color);
-  }
-
-  /* Default text color - explicit for both modes */
-  p, span, div {
-    color: var(--text-color);
-  }
-
-  /* Fix for components with built-in colors */
   button, a, input, textarea, select {
-    color: var(--text-color);
+    color: var(--text-color) !important;
   }
 
-  /* Button styles */
-  button.bg-eduAccent, button.bg-accent {
+  button.bg-accent {
     color: white;
   }
 
@@ -171,51 +105,28 @@
     color: white;
   }
 
-  /* Fix for Recharts text in both modes */
   .recharts-text {
     fill: var(--text-color) !important;
   }
-  
-  .recharts-cartesian-axis-line {
-    stroke: var(--chart-grid) !important;
+
+  h1, h2, h3, h4 {
+    color: var(--text-color);
   }
-  
-  .recharts-cartesian-grid-horizontal line,
-  .recharts-cartesian-grid-vertical line {
-    stroke: var(--chart-grid) !important;
-    opacity: 0.3;
+  p, span, div {
+    color: var(--text-color);
   }
-  
-  /* Card styles that work in both themes */
+
+  .bg-accent {
+    background-color: hsl(var(--accent)) !important;
+    color: var(--accent-foreground) !important;
+  }
+  .text-app { color: var(--text-color) !important; }
+  .text-app-muted { color: var(--text-color) !important; opacity: 0.7; }
+
   .card {
     background-color: var(--card-bg);
     @apply rounded-lg shadow-md border border-border/40;
     color: var(--text-color);
-  }
-  
-  /* Input styles with proper contrast */
-  input, textarea, select {
-    border-color: var(--input-border) !important;
-    background-color: var(--background-color) !important;
-    color: var(--text-color) !important;
-  }
-
-  /* Light theme specific overrides for better contrast */
-  .light input, .light textarea, .light select {
-    color: var(--text-color) !important;
-    border-color: var(--input-border) !important;
-  }
-
-  .light .text-foreground {
-    color: var(--text-color) !important;
-  }
-
-  .light .bg-accent {
-    color: white !important;
-  }
-
-  .light label {
-    color: var(--text-color) !important;
   }
 }
 
