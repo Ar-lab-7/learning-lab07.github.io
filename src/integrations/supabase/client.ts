@@ -36,69 +36,60 @@ export type Blog = {
   author_id?: string;
 };
 
-// Function to validate developer login - simplified for demo
+// Simplified developer login function for demo
 export const validateDeveloperLogin = async (username: string, password: string): Promise<UserProfile | null> => {
   console.log('Attempting login with:', username);
   
-  // Accept any non-empty password for simplified testing
+  // Ensure username and password are provided
+  if (!username || username.trim() === '') {
+    console.error('Username is empty');
+    return null;
+  }
+  
   if (!password || password.trim() === '') {
     console.error('Password is empty');
     return null;
   }
 
   try {
-    // Try to authenticate with Supabase
+    // First try to sign in - use a standardized email format
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email: `${username}@learninglab.dev`,
+      email: `${username.toLowerCase()}@learninglab.dev`,
       password: password
     });
 
     if (authError) {
-      console.error('Authentication error:', authError);
+      console.log('Sign in error:', authError.message);
       
-      // If user doesn't exist, create one automatically
-      if (authError.message.includes('Invalid login credentials')) {
-        console.log('Creating new user account');
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email: `${username}@learninglab.dev`,
-          password: password
-        });
-        
-        if (signUpError) {
-          console.error('Sign up error:', signUpError);
-          return null;
-        }
-        
-        if (signUpData.user) {
-          console.log('New user account created');
-        }
-      } else {
+      // If login fails, create a new account automatically for demo purposes
+      console.log('Creating new account for:', username);
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: `${username.toLowerCase()}@learninglab.dev`,
+        password: password
+      });
+      
+      if (signUpError) {
+        console.error('Sign up error:', signUpError);
         return null;
       }
-    }
-
-    // Check if developer profile exists in the database
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('username', username)
-      .single();
-
-    if (error || !data) {
-      console.log('Creating new developer profile');
       
-      // Create a developer profile if it doesn't exist
+      if (!signUpData.user) {
+        console.error('No user data after signup');
+        return null;
+      }
+      
+      // Create a developer profile for the new user
       const { data: newProfile, error: profileError } = await supabase
         .from('profiles')
         .insert([{ 
           username: username, 
           is_developer: true,
-          id: authData?.user?.id || username
+          id: signUpData.user.id 
         }])
         .select()
         .single();
-        
-      if (profileError || !newProfile) {
+      
+      if (profileError) {
         console.error('Profile creation error:', profileError);
         return null;
       }
@@ -106,15 +97,47 @@ export const validateDeveloperLogin = async (username: string, password: string)
       return newProfile;
     }
 
-    // Ensure the profile has developer privileges
-    if (!data.is_developer) {
+    if (!authData.user) {
+      console.error('Authentication successful but no user data returned');
+      return null;
+    }
+
+    // Check if profile exists
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authData.user.id)
+      .single();
+    
+    if (profileError || !profileData) {
+      // Create profile if it doesn't exist
+      const { data: newProfile, error: newProfileError } = await supabase
+        .from('profiles')
+        .insert([{ 
+          username: username, 
+          is_developer: true,
+          id: authData.user.id 
+        }])
+        .select()
+        .single();
+      
+      if (newProfileError) {
+        console.error('Profile creation error:', newProfileError);
+        return null;
+      }
+      
+      return newProfile;
+    }
+    
+    // Ensure developer status is set
+    if (!profileData.is_developer) {
       const { data: updatedProfile, error: updateError } = await supabase
         .from('profiles')
         .update({ is_developer: true })
-        .eq('id', data.id)
+        .eq('id', profileData.id)
         .select()
         .single();
-        
+      
       if (updateError) {
         console.error('Profile update error:', updateError);
         return null;
@@ -122,8 +145,8 @@ export const validateDeveloperLogin = async (username: string, password: string)
       
       return updatedProfile;
     }
-
-    return data;
+    
+    return profileData;
   } catch (error) {
     console.error('Unexpected error during login:', error);
     return null;

@@ -7,7 +7,7 @@
 
 @layer base {
   :root {
-    /* Light theme */
+    /* Light theme - improved for better contrast */
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
@@ -39,10 +39,16 @@
 
     --background-color: #F1F0FB;
     --text-color: #1A1F2C;
+    --card-bg: #FFFFFF;
+    --button-text: #FFFFFF;
+    --button-hover: rgba(154, 119, 207, 0.9);
+    --link-color: #7E69AB;
+    --chart-grid: #8E9196;
+    --input-border: rgba(26, 31, 44, 0.2);
   }
 
   .dark {
-    /* Dark theme - Apple-inspired */
+    /* Dark theme - refined for better contrast */
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
     --card: 240 10% 3.9%;
@@ -65,6 +71,12 @@
 
     --background-color: #1A1F2C;
     --text-color: #F1F0FB;
+    --card-bg: #2A2F3C;
+    --button-text: #FFFFFF;
+    --button-hover: rgba(154, 119, 207, 0.9);
+    --link-color: #9A77CF;
+    --chart-grid: #8E9196;
+    --input-border: rgba(241, 240, 251, 0.2);
   }
 }
 
@@ -116,7 +128,7 @@
     @apply bg-eduAccent/30 rounded-full hover:bg-eduAccent/50 transition-colors;
   }
 
-  /* Responsive heading sizes */
+  /* Responsive heading sizes with improved contrast */
   h1 {
     @apply text-2xl md:text-3xl lg:text-4xl 4xl:text-5xl font-bold text-foreground;
   }
@@ -133,25 +145,52 @@
     @apply text-base md:text-lg lg:text-xl 4xl:text-2xl font-medium text-foreground;
   }
 
-  /* Default text color */
+  /* Default text color - explicit for light mode */
   p, span, div {
     @apply text-foreground;
   }
 
-  /* Fix for Recharts text in light mode */
+  /* Fix for components with built-in colors */
+  button, a, input, textarea, select {
+    @apply text-foreground;
+  }
+
+  /* Fix for Recharts text in both modes */
   .recharts-text {
-    fill: var(--text-color);
+    fill: var(--text-color) !important;
+  }
+  
+  .recharts-cartesian-axis-line {
+    stroke: var(--chart-grid) !important;
+  }
+  
+  .recharts-cartesian-grid-horizontal line,
+  .recharts-cartesian-grid-vertical line {
+    stroke: var(--chart-grid) !important;
+    opacity: 0.3;
+  }
+  
+  /* Card styles that work in both themes */
+  .card {
+    background-color: var(--card-bg);
+    @apply rounded-lg shadow-md text-foreground border border-border/40;
+  }
+  
+  /* Input styles with proper contrast */
+  input, textarea, select {
+    border-color: var(--input-border) !important;
+    background-color: var(--background-color) !important;
   }
 }
 
 @layer components {
   /* Card styling with glass morphism */
   .chapter-card {
-    @apply relative rounded-lg backdrop-blur-md bg-white/5 border border-white/10 shadow-lg transition-all duration-300 text-foreground;
+    @apply relative rounded-lg backdrop-blur-md bg-card border border-border/40 shadow-lg transition-all duration-300 text-foreground;
   }
 
   .chapter-card:hover {
-    @apply shadow-xl bg-white/10 border-eduAccent/30;
+    @apply shadow-xl border-eduAccent/30;
   }
   
   /* Overlay for modals with blur */
@@ -168,26 +207,25 @@
     @apply p-5 rounded-lg bg-secondary/60 text-foreground font-sans min-h-[200px] focus:outline-none resize-none;
   }
   
-  /* Button */
+  /* Button with improved visibility in both themes */
   .apple-button {
     @apply rounded-full py-2 px-4 font-medium transition-all duration-200
            bg-gradient-to-b from-eduAccent/90 to-eduAccent/70
            hover:from-eduAccent to-eduAccent/80
-           active:scale-95 shadow-md hover:shadow-lg text-foreground;
+           active:scale-95 shadow-md hover:shadow-lg text-white;
   }
   
   /* Glass panel */
   .glass {
-    @apply backdrop-blur-md bg-white/5 border border-white/10 shadow-lg text-foreground;
+    @apply backdrop-blur-md border border-border/30 shadow-lg text-foreground;
   }
 
-  /* Light mode specific */
   .light .glass {
-    @apply backdrop-blur-md bg-black/5 border border-black/10 shadow-md text-foreground;
+    @apply bg-white/80 border-black/10;
   }
-
-  .light .overlay {
-    @apply bg-black/40;
+  
+  .dark .glass {
+    @apply bg-black/20 border-white/10;
   }
 
   /* Responsive container sizes */
@@ -198,6 +236,22 @@
   /* Responsive grid layouts */
   .grid-responsive {
     @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 4xl:grid-cols-6 5xl:grid-cols-8 gap-4 sm:gap-6 lg:gap-8;
+  }
+  
+  /* Dashboard card - new component */
+  .dashboard-card {
+    @apply bg-card rounded-xl p-4 lg:p-6 border border-border/30 shadow-md
+           hover:shadow-lg transition-all duration-300;
+  }
+  
+  /* Stats number - new component */
+  .stats-number {
+    @apply text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground;
+  }
+  
+  /* Stats label - new component */
+  .stats-label {
+    @apply text-sm text-foreground/70 font-medium;
   }
 }
 
@@ -258,16 +312,12 @@ pre[class*="language-"] {
 }
 
 pre[class*="language-"] {
-  @apply rounded-lg border border-white/10;
+  @apply rounded-lg border border-border/30;
 }
 
-.light pre[class*="language-"] {
-  @apply border-black/10;
-}
-
-/* Chart fixes for light mode */
+/* Chart fixes for both modes */
 .recharts-cartesian-axis-tick-value {
-  fill: var(--text-color);
+  fill: var(--text-color) !important;
 }
 
 .recharts-legend-item-text {
@@ -291,6 +341,10 @@ pre[class*="language-"] {
   .apple-button {
     @apply py-1.5 px-3 text-sm;
   }
+  
+  .dashboard-card {
+    @apply p-3;
+  }
 }
 
 /* Extra Small Devices */
@@ -310,6 +364,14 @@ pre[class*="language-"] {
   .apple-button {
     @apply py-1 px-2 text-xs;
   }
+  
+  .dashboard-card {
+    @apply p-2;
+  }
+  
+  .stats-number {
+    @apply text-xl;
+  }
 }
 
 /* Large TV Screens */
@@ -328,6 +390,14 @@ pre[class*="language-"] {
   
   .apple-button {
     @apply py-3 px-6 text-lg;
+  }
+  
+  .dashboard-card {
+    @apply p-8;
+  }
+  
+  .stats-number {
+    @apply text-5xl;
   }
 }
 
@@ -363,26 +433,41 @@ pre[class*="language-"] {
   animation: pulse-light 2s infinite ease-in-out;
 }
 
-/* Fix for login dialog */
+/* Fix for login dialog in light mode */
 .light .Dialog {
-  @apply text-foreground;
+  @apply text-foreground bg-background;
 }
 
 .light input {
-  @apply text-foreground;
+  @apply text-foreground border-foreground/20;
 }
 
 .light button {
   @apply text-foreground;
 }
 
-/* Fix for chart tooltips in light mode */
+/* Light mode specific button */
+.light button.bg-eduAccent {
+  @apply text-white;
+}
+
+/* Fix for chart tooltips in both modes */
 .recharts-tooltip-wrapper .recharts-default-tooltip {
-  background-color: var(--background) !important;
+  background-color: var(--card-bg) !important;
   border-color: var(--border) !important;
 }
 
 .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-label,
 .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item {
-  color: var(--foreground) !important;
+  color: var(--text-color) !important;
+}
+
+/* Dashboard layout utilities */
+.dashboard-grid {
+  @apply grid gap-4 sm:gap-6;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.dashboard-section {
+  @apply p-4 sm:p-6 rounded-xl bg-card border border-border/30;
 }
