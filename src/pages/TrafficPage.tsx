@@ -24,6 +24,7 @@ import {
 const TrafficPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<TrafficStats | null>(null);
+  const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'all'>('all');
   const { isDeveloper } = useAuth();
   const navigate = useNavigate();
   
@@ -34,6 +35,10 @@ const TrafficPage = () => {
       return;
     }
     
+    // Record pageview on component mount
+    TrafficService.recordPageview();
+    
+    // Load traffic data
     const loadTrafficData = async () => {
       setIsLoading(true);
       try {
@@ -47,15 +52,15 @@ const TrafficPage = () => {
     };
     
     loadTrafficData();
-  }, [isDeveloper, navigate]);
+  }, [isDeveloper, navigate, period]);
   
   // Convert object data to array format for charts
   const prepareChartData = (data: Record<string, number> = {}) => {
     return Object.entries(data).map(([name, value]) => ({ name, value }));
   };
   
-  // Colors for pie charts
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+  // Colors for pie charts - more vibrant for better visibility in light mode
+  const COLORS = ['#8884d8', '#00C49F', '#FFBB28', '#FF8042', '#0088FE', '#82ca9d'];
   
   // Format date labels to be more readable
   const formatDate = (dateStr: string) => {
@@ -66,29 +71,42 @@ const TrafficPage = () => {
   };
   
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="flex flex-col md:flex-row justify-between items-start mb-6">
+    <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
         <div>
           <Button 
-            variant="ghost" 
-            className="mb-4" 
+            variant="outline" 
+            className="mb-4 text-foreground" 
             onClick={() => navigate('/')}
           >
             <ArrowLeft className="mr-2" size={16} />
             Back to Home
           </Button>
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Traffic Analytics</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-foreground">Traffic Analytics</h1>
           <p className="text-muted-foreground">Monitor website performance and visitor behavior</p>
         </div>
         
-        <Button 
-          onClick={() => window.location.reload()} 
-          variant="secondary" 
-          className="mt-4 md:mt-0"
-          disabled={isLoading}
-        >
-          {isLoading ? 'Loading...' : 'Refresh Data'}
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <select 
+            className="border rounded-md p-2 bg-background text-foreground"
+            value={period}
+            onChange={(e) => setPeriod(e.target.value as any)}
+          >
+            <option value="all">All Time</option>
+            <option value="month">Past Month</option>
+            <option value="week">Past Week</option>
+            <option value="today">Today</option>
+          </select>
+          
+          <Button 
+            onClick={() => window.location.reload()} 
+            variant="secondary" 
+            className="text-foreground"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Loading...' : 'Refresh Data'}
+          </Button>
+        </div>
       </div>
       
       {isLoading ? (
@@ -100,65 +118,74 @@ const TrafficPage = () => {
         </div>
       ) : stats ? (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <Card>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <Card className="border-eduAccent/20 shadow-md">
               <CardHeader className="pb-2">
-                <CardDescription>Total Pageviews</CardDescription>
-                <CardTitle className="text-3xl">{stats.totalViews}</CardTitle>
+                <CardDescription className="text-sm font-medium text-muted-foreground">Total Pageviews</CardDescription>
+                <CardTitle className="text-3xl text-foreground">{stats.totalViews.toLocaleString()}</CardTitle>
               </CardHeader>
               <CardContent>
-                <Globe className="text-muted-foreground" size={16} />
+                <div className="flex items-center text-muted-foreground">
+                  <Globe className="mr-2" size={16} />
+                  <span>All traffic</span>
+                </div>
               </CardContent>
             </Card>
             
-            <Card>
+            <Card className="border-eduAccent/20 shadow-md">
               <CardHeader className="pb-2">
-                <CardDescription>Unique Visitors</CardDescription>
-                <CardTitle className="text-3xl">{stats.uniqueVisitors}</CardTitle>
+                <CardDescription className="text-sm font-medium text-muted-foreground">Unique Visitors</CardDescription>
+                <CardTitle className="text-3xl text-foreground">{stats.uniqueVisitors.toLocaleString()}</CardTitle>
               </CardHeader>
               <CardContent>
-                <Laptop className="text-muted-foreground" size={16} />
+                <div className="flex items-center text-muted-foreground">
+                  <Laptop className="mr-2" size={16} />
+                  <span>Unique IPs</span>
+                </div>
               </CardContent>
             </Card>
             
-            <Card>
+            <Card className="border-eduAccent/20 shadow-md">
               <CardHeader className="pb-2">
-                <CardDescription>Pages / Visitor</CardDescription>
-                <CardTitle className="text-3xl">
+                <CardDescription className="text-sm font-medium text-muted-foreground">Pages / Visitor</CardDescription>
+                <CardTitle className="text-3xl text-foreground">
                   {stats.uniqueVisitors > 0 ? (stats.totalViews / stats.uniqueVisitors).toFixed(1) : '0'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <BarChart className="text-muted-foreground" size={16} />
+                <div className="flex items-center text-muted-foreground">
+                  <BarChart className="mr-2" size={16} />
+                  <span>Engagement</span>
+                </div>
               </CardContent>
             </Card>
             
-            <Card>
+            <Card className="border-eduAccent/20 shadow-md">
               <CardHeader className="pb-2">
-                <CardDescription>Top Device</CardDescription>
-                <CardTitle className="text-3xl">
+                <CardDescription className="text-sm font-medium text-muted-foreground">Top Device</CardDescription>
+                <CardTitle className="text-3xl text-foreground">
                   {Object.entries(stats.byDevice).length > 0 
                     ? Object.entries(stats.byDevice).sort((a, b) => b[1] - a[1])[0]?.[0] 
                     : 'N/A'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center">
+                <div className="flex items-center text-muted-foreground">
                   {Object.entries(stats.byDevice).length > 0 ? (
                     <>
                       {Object.entries(stats.byDevice).sort((a, b) => b[1] - a[1])[0]?.[0] === 'Mobile' ? (
-                        <Smartphone className="text-muted-foreground" size={16} />
+                        <Smartphone className="mr-2" size={16} />
                       ) : Object.entries(stats.byDevice).sort((a, b) => b[1] - a[1])[0]?.[0] === 'Tablet' ? (
-                        <Tablet className="text-muted-foreground" size={16} />
+                        <Tablet className="mr-2" size={16} />
                       ) : (
-                        <Laptop className="text-muted-foreground" size={16} />
+                        <Laptop className="mr-2" size={16} />
                       )}
-                      <span className="ml-2 text-muted-foreground">
-                        {Object.entries(stats.byDevice).sort((a, b) => b[1] - a[1])[0]?.[1] || 0} visits
+                      <span>
+                        {Object.entries(stats.byDevice).sort((a, b) => b[1] - a[1])[0]?.[1].toLocaleString() || 0} visits
                       </span>
                     </>
                   ) : (
-                    <span className="text-muted-foreground">No data</span>
+                    <span>No data</span>
                   )}
                 </div>
               </CardContent>
@@ -166,38 +193,43 @@ const TrafficPage = () => {
           </div>
           
           <Tabs defaultValue="overview" className="w-full mb-8">
-            <TabsList className="mb-4">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="pages">Pages</TabsTrigger>
-              <TabsTrigger value="devices">Devices & Browsers</TabsTrigger>
+            <TabsList className="mb-4 bg-muted text-foreground">
+              <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Overview</TabsTrigger>
+              <TabsTrigger value="pages" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Pages</TabsTrigger>
+              <TabsTrigger value="devices" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Devices & Browsers</TabsTrigger>
             </TabsList>
             
             <TabsContent value="overview">
-              <Card>
+              <Card className="border-eduAccent/20 shadow-md">
                 <CardHeader>
-                  <CardTitle className="flex items-center">
+                  <CardTitle className="flex items-center text-foreground">
                     <Calendar className="mr-2" size={18} />
                     Daily Visits
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="h-[400px]">
+                <CardContent className="pt-4">
+                  <div className="h-[400px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <RechartsBarChart
                         data={prepareChartData(stats.byDate).sort((a, b) => new Date(a.name).getTime() - new Date(b.name).getTime())}
                         margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
                       >
-                        <CartesianGrid strokeDasharray="3 3" />
+                        <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.3} />
                         <XAxis 
                           dataKey="name" 
                           angle={-45} 
                           textAnchor="end" 
                           height={80} 
                           tickFormatter={formatDate} 
+                          tick={{ fill: '#666' }}
+                          stroke="#666"
                         />
-                        <YAxis />
-                        <Tooltip />
-                        <Bar dataKey="value" name="Visits" fill="#8884d8" />
+                        <YAxis tick={{ fill: '#666' }} stroke="#666" />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: 'var(--background)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
+                          labelStyle={{ color: 'var(--foreground)' }}
+                        />
+                        <Bar dataKey="value" name="Visits" fill="#8884d8" radius={[4, 4, 0, 0]} />
                       </RechartsBarChart>
                     </ResponsiveContainer>
                   </div>
@@ -206,28 +238,32 @@ const TrafficPage = () => {
             </TabsContent>
             
             <TabsContent value="pages">
-              <Card>
+              <Card className="border-eduAccent/20 shadow-md">
                 <CardHeader>
-                  <CardTitle>Popular Pages</CardTitle>
+                  <CardTitle className="text-foreground">Popular Pages</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="h-[400px]">
+                <CardContent className="pt-4">
+                  <div className="h-[400px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <RechartsBarChart
                         data={prepareChartData(stats.byPage).sort((a, b) => b.value - a.value).slice(0, 10)}
                         layout="vertical"
                         margin={{ top: 20, right: 30, left: 150, bottom: 20 }}
                       >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" />
+                        <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.3} />
+                        <XAxis type="number" tick={{ fill: '#666' }} stroke="#666" />
                         <YAxis 
                           type="category" 
                           dataKey="name" 
                           width={140} 
-                          tick={{ fontSize: 12 }} 
+                          tick={{ fontSize: 12, fill: '#666' }} 
+                          stroke="#666"
                         />
-                        <Tooltip />
-                        <Bar dataKey="value" name="Visits" fill="#82ca9d" />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: 'var(--background)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
+                          labelStyle={{ color: 'var(--foreground)' }}
+                        />
+                        <Bar dataKey="value" name="Visits" fill="#82ca9d" radius={[0, 4, 4, 0]} />
                       </RechartsBarChart>
                     </ResponsiveContainer>
                   </div>
@@ -236,12 +272,12 @@ const TrafficPage = () => {
             </TabsContent>
             
             <TabsContent value="devices">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="border-eduAccent/20 shadow-md">
                   <CardHeader>
-                    <CardTitle>Device Types</CardTitle>
+                    <CardTitle className="text-foreground">Device Types</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="pt-4">
                     <div className="h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
@@ -260,18 +296,21 @@ const TrafficPage = () => {
                               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                           </Pie>
-                          <Tooltip />
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: 'var(--background)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
+                            labelStyle={{ color: 'var(--foreground)' }}
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
                   </CardContent>
                 </Card>
                 
-                <Card>
+                <Card className="border-eduAccent/20 shadow-md">
                   <CardHeader>
-                    <CardTitle>Browsers</CardTitle>
+                    <CardTitle className="text-foreground">Browsers</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="pt-4">
                     <div className="h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
@@ -290,7 +329,10 @@ const TrafficPage = () => {
                               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                           </Pie>
-                          <Tooltip />
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: 'var(--background)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
+                            labelStyle={{ color: 'var(--foreground)' }}
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -302,8 +344,9 @@ const TrafficPage = () => {
         </>
       ) : (
         <div className="text-center py-12">
-          <h3 className="text-xl font-medium text-muted-foreground mb-2">No traffic data found</h3>
+          <h3 className="text-xl font-medium text-foreground mb-2">No traffic data found</h3>
           <p className="text-muted-foreground mb-4">There is no traffic data available yet.</p>
+          <Button onClick={() => TrafficService.recordPageview()}>Record Current Visit</Button>
         </div>
       )}
     </div>

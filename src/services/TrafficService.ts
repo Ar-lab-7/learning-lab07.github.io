@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -11,11 +12,13 @@ export interface TrafficStats {
   byBrowser: Record<string, number>;
 }
 
+// Use a consistent website ID for all traffic data
 const WEBSITE_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 export const TrafficService = {
   recordPageview: async () => {
     try {
+      // Record the pageview on backend via Supabase RPC
       const { data, error } = await supabase.rpc('record_pageview', {
         site_id: WEBSITE_ID,
         page_url: window.location.pathname,
@@ -70,23 +73,22 @@ export const TrafficService = {
     try {
       const { data, error } = await supabase
         .from('pageviews')
-        .select('browser, count')
-        .not('browser', 'is', null)
-        .then(result => ({
-          ...result,
-          data: result.data?.reduce((acc, item) => {
-            const browser = item.browser || 'Unknown';
-            acc[browser] = (acc[browser] || 0) + 1;
-            return acc;
-          }, {} as Record<string, number>)
-        }));
+        .select('browser')
+        .not('browser', 'is', null);
       
       if (error) {
         console.error('Error fetching browser stats:', error);
         return {};
       }
       
-      return data || {};
+      // Process data to get counts by browser
+      const browserCounts: Record<string, number> = {};
+      data?.forEach(item => {
+        const browser = item.browser || 'Unknown';
+        browserCounts[browser] = (browserCounts[browser] || 0) + 1;
+      });
+      
+      return browserCounts;
     } catch (error) {
       console.error('Error in getBrowserStats:', error);
       return {};
@@ -97,23 +99,22 @@ export const TrafficService = {
     try {
       const { data, error } = await supabase
         .from('pageviews')
-        .select('device, count')
-        .not('device', 'is', null)
-        .then(result => ({
-          ...result,
-          data: result.data?.reduce((acc, item) => {
-            const device = item.device || 'Unknown';
-            acc[device] = (acc[device] || 0) + 1;
-            return acc;
-          }, {} as Record<string, number>)
-        }));
+        .select('device')
+        .not('device', 'is', null);
       
       if (error) {
         console.error('Error fetching device stats:', error);
         return {};
       }
       
-      return data || {};
+      // Process data to get counts by device
+      const deviceCounts: Record<string, number> = {};
+      data?.forEach(item => {
+        const device = item.device || 'Unknown';
+        deviceCounts[device] = (deviceCounts[device] || 0) + 1;
+      });
+      
+      return deviceCounts;
     } catch (error) {
       console.error('Error in getDeviceStats:', error);
       return {};
@@ -136,29 +137,26 @@ export const TrafficService = {
       // Fetch visits by date
       const { data: dateData } = await supabase
         .from('pageviews')
-        .select('created_at')
-        .order('created_at', { ascending: true })
-        .then(result => ({
-          ...result,
-          data: result.data?.reduce((acc, item) => {
-            const date = new Date(item.created_at).toISOString().split('T')[0];
-            acc[date] = (acc[date] || 0) + 1;
-            return acc;
-          }, {} as Record<string, number>)
-        }));
+        .select('created_at');
+      
+      // Process date data
+      const byDate: Record<string, number> = {};
+      dateData?.forEach(item => {
+        const date = new Date(item.created_at).toISOString().split('T')[0];
+        byDate[date] = (byDate[date] || 0) + 1;
+      });
 
       // Fetch visits by page
       const { data: pageData } = await supabase
         .from('pageviews')
-        .select('page_url')
-        .then(result => ({
-          ...result,
-          data: result.data?.reduce((acc, item) => {
-            const page = item.page_url || 'Unknown';
-            acc[page] = (acc[page] || 0) + 1;
-            return acc;
-          }, {} as Record<string, number>)
-        }));
+        .select('page_url');
+      
+      // Process page data
+      const byPage: Record<string, number> = {};
+      pageData?.forEach(item => {
+        const page = item.page_url || 'Unknown';
+        byPage[page] = (byPage[page] || 0) + 1;
+      });
 
       // Use existing methods for device and browser stats
       const byDevice = await TrafficService.getDeviceStats();
@@ -167,8 +165,8 @@ export const TrafficService = {
       return {
         totalViews: totalViews || 0,
         uniqueVisitors: uniqueVisitors || 0,
-        byDate: dateData || {},
-        byPage: pageData || {},
+        byDate,
+        byPage,
         byDevice,
         byBrowser
       };

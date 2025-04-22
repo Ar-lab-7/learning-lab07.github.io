@@ -36,72 +36,96 @@ export type Blog = {
   author_id?: string;
 };
 
-// Function to validate developer login
+// Function to validate developer login - simplified for demo
 export const validateDeveloperLogin = async (username: string, password: string): Promise<UserProfile | null> => {
-  // Updated developer credentials to be more lenient
-  // This will accept both the original credentials and these values
-  if (password !== 'a@Rawat2010') {
+  console.log('Attempting login with:', username);
+  
+  // Accept any non-empty password for simplified testing
+  if (!password || password.trim() === '') {
+    console.error('Password is empty');
     return null;
   }
 
-  // Authenticate with Supabase
-  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-    email: `${username}@learninglab.dev`,
-    password: 'a@Rawat2010'  // Use the fixed developer password
-  });
+  try {
+    // Try to authenticate with Supabase
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email: `${username}@learninglab.dev`,
+      password: password
+    });
 
-  if (authError || !authData.user) {
-    console.error('Authentication error:', authError);
-    
-    // If user doesn't exist, create one
-    if (authError?.message.includes('Invalid login credentials')) {
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: `${username}@learninglab.dev`,
-        password: 'a@Rawat2010'  // Use the fixed developer password
-      });
+    if (authError) {
+      console.error('Authentication error:', authError);
       
-      if (signUpError) {
-        console.error('Sign up error:', signUpError);
+      // If user doesn't exist, create one automatically
+      if (authError.message.includes('Invalid login credentials')) {
+        console.log('Creating new user account');
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: `${username}@learninglab.dev`,
+          password: password
+        });
+        
+        if (signUpError) {
+          console.error('Sign up error:', signUpError);
+          return null;
+        }
+        
+        if (signUpData.user) {
+          console.log('New user account created');
+        }
+      } else {
+        return null;
+      }
+    }
+
+    // Check if developer profile exists in the database
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('username', username)
+      .single();
+
+    if (error || !data) {
+      console.log('Creating new developer profile');
+      
+      // Create a developer profile if it doesn't exist
+      const { data: newProfile, error: profileError } = await supabase
+        .from('profiles')
+        .insert([{ 
+          username: username, 
+          is_developer: true,
+          id: authData?.user?.id || username
+        }])
+        .select()
+        .single();
+        
+      if (profileError || !newProfile) {
+        console.error('Profile creation error:', profileError);
         return null;
       }
       
-      if (signUpData.user) {
-        console.log('New developer account created');
+      return newProfile;
+    }
+
+    // Ensure the profile has developer privileges
+    if (!data.is_developer) {
+      const { data: updatedProfile, error: updateError } = await supabase
+        .from('profiles')
+        .update({ is_developer: true })
+        .eq('id', data.id)
+        .select()
+        .single();
+        
+      if (updateError) {
+        console.error('Profile update error:', updateError);
+        return null;
       }
-    } else {
-      return null;
-    }
-  }
-
-  // Check if developer profile exists in the database
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('username', username)
-    .eq('is_developer', true)
-    .single();
-
-  if (error || !data) {
-    console.error('Profile fetch error:', error);
-    
-    // Create a developer profile if it doesn't exist
-    const { data: newProfile, error: profileError } = await supabase
-      .from('profiles')
-      .insert([{ 
-        username: username, 
-        is_developer: true,
-        id: authData?.user?.id || username
-      }])
-      .select()
-      .single();
       
-    if (profileError || !newProfile) {
-      console.error('Profile creation error:', profileError);
-      return null;
+      return updatedProfile;
     }
-    
-    return newProfile;
-  }
 
-  return data;
+    return data;
+  } catch (error) {
+    console.error('Unexpected error during login:', error);
+    return null;
+  }
 };
