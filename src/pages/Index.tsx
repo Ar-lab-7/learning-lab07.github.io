@@ -182,19 +182,6 @@ const Index = () => {
 
   // Handle adding a new blog
   const handleAddBlog = async (blogData: { title: string, content: string, date: string, readTime: string, imageUrl?: string }) => {
-    // If user is not a developer, save to local storage
-    if (user && !isDeveloper) {
-      const newBlog = BlogService.saveToLocalStorage({
-        ...blogData,
-        read_time: blogData.readTime // Add read_time field to match Blog type
-      });
-      if (newBlog) {
-        setUserLocalBlogs(prev => [...prev, newBlog as Blog]);
-      }
-      return;
-    }
-    
-    // Otherwise save to database
     const saved = await BlogService.createBlog({
       ...blogData,
       read_time: blogData.readTime // Add read_time field to match Blog type

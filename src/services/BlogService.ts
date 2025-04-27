@@ -1,4 +1,3 @@
-
 import { supabase, Blog } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -33,13 +32,6 @@ export const BlogService = {
   // Create a new blog in Supabase
   createBlog: async (blogData: Omit<Blog, 'id' | 'created_at' | 'updated_at' | 'author_id'>): Promise<Blog | null> => {
     try {
-      // Check if user is authenticated
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error('You must be logged in to create a blog');
-        return null;
-      }
-
       // Ensure we have the database fields set
       const dbBlogData = {
         title: blogData.title,
