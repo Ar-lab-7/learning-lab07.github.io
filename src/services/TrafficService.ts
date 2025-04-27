@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -38,7 +37,10 @@ export const TrafficService = {
 
   getPageviews: async (period: 'today' | 'week' | 'month' | 'all' = 'all') => {
     try {
-      let query = supabase.from('pageviews').select('*');
+      let query = supabase
+        .from('pageviews')
+        .select('*')
+        .eq('website_id', WEBSITE_ID);
       
       // Add time filter based on period
       const now = new Date();
@@ -123,21 +125,24 @@ export const TrafficService = {
 
   getTrafficStats: async (): Promise<TrafficStats> => {
     try {
-      // Fetch total pageviews
+      // Fetch total pageviews for this specific website
       const { count: totalViews } = await supabase
         .from('pageviews')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
+        .eq('website_id', WEBSITE_ID);
 
-      // Fetch unique visitors
+      // Fetch unique visitors for this website
       const { count: uniqueVisitors } = await supabase
         .from('pageviews')
         .select('ip', { count: 'exact', head: true })
-        .not('ip', 'is', null);
+        .not('ip', 'is', null)
+        .eq('website_id', WEBSITE_ID);
 
-      // Fetch visits by date
+      // Fetch visits by date for this website
       const { data: dateData } = await supabase
         .from('pageviews')
-        .select('created_at');
+        .select('created_at')
+        .eq('website_id', WEBSITE_ID);
       
       // Process date data
       const byDate: Record<string, number> = {};
@@ -146,10 +151,11 @@ export const TrafficService = {
         byDate[date] = (byDate[date] || 0) + 1;
       });
 
-      // Fetch visits by page
+      // Fetch visits by page for this website
       const { data: pageData } = await supabase
         .from('pageviews')
-        .select('page_url');
+        .select('page_url')
+        .eq('website_id', WEBSITE_ID);
       
       // Process page data
       const byPage: Record<string, number> = {};
@@ -159,8 +165,8 @@ export const TrafficService = {
       });
 
       // Use existing methods for device and browser stats
-      const byDevice = await TrafficService.getDeviceStats();
-      const byBrowser = await TrafficService.getBrowserStats();
+      const byDevice = await this.getDeviceStats();
+      const byBrowser = await this.getBrowserStats();
 
       return {
         totalViews: totalViews || 0,
