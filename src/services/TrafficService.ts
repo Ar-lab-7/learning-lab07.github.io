@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -55,7 +56,7 @@ export const TrafficService = {
         query = query.gte('created_at', monthAgo);
       }
       
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data, error } = await query;
       
       if (error) {
         console.error('Error fetching pageviews:', error);
@@ -76,6 +77,7 @@ export const TrafficService = {
       const { data, error } = await supabase
         .from('pageviews')
         .select('browser')
+        .eq('website_id', WEBSITE_ID)
         .not('browser', 'is', null);
       
       if (error) {
@@ -86,8 +88,10 @@ export const TrafficService = {
       // Process data to get counts by browser
       const browserCounts: Record<string, number> = {};
       data?.forEach(item => {
-        const browser = item.browser || 'Unknown';
-        browserCounts[browser] = (browserCounts[browser] || 0) + 1;
+        if (item.browser) {
+          const browser = item.browser;
+          browserCounts[browser] = (browserCounts[browser] || 0) + 1;
+        }
       });
       
       return browserCounts;
@@ -102,6 +106,7 @@ export const TrafficService = {
       const { data, error } = await supabase
         .from('pageviews')
         .select('device')
+        .eq('website_id', WEBSITE_ID)
         .not('device', 'is', null);
       
       if (error) {
@@ -112,8 +117,10 @@ export const TrafficService = {
       // Process data to get counts by device
       const deviceCounts: Record<string, number> = {};
       data?.forEach(item => {
-        const device = item.device || 'Unknown';
-        deviceCounts[device] = (deviceCounts[device] || 0) + 1;
+        if (item.device) {
+          const device = item.device;
+          deviceCounts[device] = (deviceCounts[device] || 0) + 1;
+        }
       });
       
       return deviceCounts;
@@ -135,8 +142,8 @@ export const TrafficService = {
       const { count: uniqueVisitors } = await supabase
         .from('pageviews')
         .select('ip', { count: 'exact', head: true })
-        .not('ip', 'is', null)
-        .eq('website_id', WEBSITE_ID);
+        .eq('website_id', WEBSITE_ID)
+        .not('ip', 'is', null);
 
       // Fetch visits by date for this website
       const { data: dateData } = await supabase
@@ -160,8 +167,10 @@ export const TrafficService = {
       // Process page data
       const byPage: Record<string, number> = {};
       pageData?.forEach(item => {
-        const page = item.page_url || 'Unknown';
-        byPage[page] = (byPage[page] || 0) + 1;
+        if (item.page_url) {
+          const page = item.page_url;
+          byPage[page] = (byPage[page] || 0) + 1;
+        }
       });
 
       // Use existing methods for device and browser stats
