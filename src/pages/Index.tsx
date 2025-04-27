@@ -53,7 +53,7 @@ const Index = () => {
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const { isMobile, isTablet } = useDeviceType();
-  const { user, profile, signOut, isDeveloper } = useAuth();
+  const { user, profile, isDeveloper, signOut } = useAuth();
 
   // Listen for beforeinstallprompt event to show install button
   useEffect(() => {

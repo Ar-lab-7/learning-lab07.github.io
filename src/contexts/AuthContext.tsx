@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile } from '@/integrations/supabase/client';
 
@@ -7,6 +6,7 @@ interface AuthContextType {
   user: any | null;
   isLoading: boolean;
   isDeveloper: boolean;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,11 +26,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
   
+  const signOut = async (): Promise<void> => {
+    console.log('Sign out called (no-op since all users are developers)');
+    return Promise.resolve();
+  };
+  
   const value = {
     profile,
     user: profile,
     isLoading,
-    isDeveloper: true
+    isDeveloper: true,
+    signOut
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
