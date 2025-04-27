@@ -56,7 +56,7 @@ export const TrafficService = {
         query = query.gte('created_at', monthAgo);
       }
       
-      const { data, error } = await query;
+      const { data, error } = await query.order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error fetching pageviews:', error);
@@ -154,8 +154,10 @@ export const TrafficService = {
       // Process date data
       const byDate: Record<string, number> = {};
       dateData?.forEach(item => {
-        const date = new Date(item.created_at).toISOString().split('T')[0];
-        byDate[date] = (byDate[date] || 0) + 1;
+        if (item && item.created_at) {
+          const date = new Date(item.created_at).toISOString().split('T')[0];
+          byDate[date] = (byDate[date] || 0) + 1;
+        }
       });
 
       // Fetch visits by page for this website
@@ -167,7 +169,7 @@ export const TrafficService = {
       // Process page data
       const byPage: Record<string, number> = {};
       pageData?.forEach(item => {
-        if (item.page_url) {
+        if (item && item.page_url) {
           const page = item.page_url;
           byPage[page] = (byPage[page] || 0) + 1;
         }
