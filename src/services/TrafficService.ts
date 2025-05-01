@@ -6,7 +6,7 @@ import { BrowserService } from './traffic/BrowserService';
 import { PageviewService } from './traffic/PageviewService';
 import { DateService } from './traffic/DateService';
 import { TrafficAnalyticsService } from './traffic/TrafficAnalyticsService';
-import { TrafficTypes } from './traffic/TrafficTypes';
+import { TrafficStats } from './traffic/TrafficTypes';
 
 // Use a consistent website ID for all traffic data
 const WEBSITE_ID = '550e8400-e29b-41d4-a716-446655440000';
@@ -53,7 +53,7 @@ export const TrafficService = {
   },
 
   // Get comprehensive traffic statistics
-  getTrafficStats: async (): Promise<TrafficTypes.TrafficStats> => {
+  getTrafficStats: async (): Promise<TrafficStats> => {
     try {
       // Get total views and unique visitors
       const analyticsData = await TrafficAnalyticsService.getBasicAnalytics(WEBSITE_ID);

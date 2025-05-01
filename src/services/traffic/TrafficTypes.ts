@@ -20,7 +20,8 @@ export interface BasicAnalytics {
   uniqueVisitors: number;
 }
 
-// Re-export types for external usage
+// Export types for external usage
 export const TrafficTypes = {
   // This empty object allows us to namespace the types
+  TrafficStats
 };
