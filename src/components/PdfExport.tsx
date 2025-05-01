@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { FileDown } from 'lucide-react';
+import { FilePdf } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface PdfExportProps {
@@ -9,13 +9,15 @@ interface PdfExportProps {
   title: string;
   fileName?: string;
   includeStyles?: boolean;
+  isWebContent?: boolean;
 }
 
 const PdfExport: React.FC<PdfExportProps> = ({ 
   content, 
   title, 
   fileName, 
-  includeStyles = true 
+  includeStyles = true,
+  isWebContent = false
 }) => {
   const generatePdf = async () => {
     try {
@@ -50,10 +52,36 @@ const PdfExport: React.FC<PdfExportProps> = ({
       
       tempDiv.appendChild(titleElement);
       
-      // Convert markdown-like content to HTML
-      const contentElement = document.createElement('div');
-      contentElement.innerHTML = renderContent(content);
-      tempDiv.appendChild(contentElement);
+      if (isWebContent) {
+        // Handle web content (HTML, CSS, JS)
+        try {
+          const htmlMatch = content.match(/<html>([\s\S]*?)<\/html>/);
+          const cssMatch = content.match(/<css>([\s\S]*?)<\/css>/);
+          
+          const htmlContent = htmlMatch ? htmlMatch[1] : '';
+          const cssContent = cssMatch ? cssMatch[1] : '';
+          
+          // Create style element for CSS
+          const styleElement = document.createElement('style');
+          styleElement.textContent = cssContent;
+          tempDiv.appendChild(styleElement);
+          
+          // Add HTML content
+          const contentDiv = document.createElement('div');
+          contentDiv.innerHTML = htmlContent;
+          tempDiv.appendChild(contentDiv);
+        } catch (error) {
+          console.error('Error parsing web content for PDF:', error);
+          const errorElement = document.createElement('p');
+          errorElement.textContent = 'Error generating PDF from web content.';
+          tempDiv.appendChild(errorElement);
+        }
+      } else {
+        // Convert markdown-like content to HTML
+        const contentElement = document.createElement('div');
+        contentElement.innerHTML = renderContent(content);
+        tempDiv.appendChild(contentElement);
+      }
       
       // Temporarily add to document for rendering
       document.body.appendChild(tempDiv);
@@ -92,7 +120,8 @@ const PdfExport: React.FC<PdfExportProps> = ({
       }
       
       // Save the PDF
-      pdf.save(fileName || `${title.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+      const safeName = fileName || `${title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`;
+      pdf.save(safeName);
       
       // Clean up
       document.body.removeChild(tempDiv);
@@ -138,7 +167,7 @@ const PdfExport: React.FC<PdfExportProps> = ({
       size="sm" 
       className="gap-1"
     >
-      <FileDown className="h-4 w-4 mr-1" />
+      <FilePdf className="h-4 w-4 mr-1" />
       Export PDF
     </Button>
   );

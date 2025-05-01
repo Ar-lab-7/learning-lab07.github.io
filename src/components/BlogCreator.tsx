@@ -4,17 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Bold, Italic, List, Image, Link, Heading, Check, Type, AlignLeft, Table, FileDown, Save, Eye } from 'lucide-react';
+import { X, Bold, Italic, List, Image, Link, Heading, Check, Type, AlignLeft, Table, FileDown, Save, Eye, FilePdf, Code, PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import DevicePreview from './DevicePreview';
 import { BlogService } from '@/services/BlogService';
 import { marked } from 'marked';
-import { Blog } from '@/integrations/supabase/client';
 import BlogEditorUtils from './BlogEditorUtils';
+import CodeEditor from './CodeEditor';
+import PdfExport from './PdfExport';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Blog } from '@/integrations/supabase/client';
 
 interface BlogCreatorProps {
   onClose: () => void;
-  onSave: (blogData: { title: string, content: string, date: string, readTime: string, imageUrl?: string }) => void;
+  onSave: (blogData: { title: string, content: string, date: string, readTime: string, subject?: string, imageUrl?: string }) => void;
   blogToEdit?: Blog | null;
   onUpdate?: (id: string, blogData: Partial<Blog>) => Promise<void>;
 }
@@ -29,8 +32,12 @@ const TEMPLATE_OPTIONS = [
 const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, onUpdate }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [subject, setSubject] = useState('');
   const [template, setTemplate] = useState('blank');
   const [activeTab, setActiveTab] = useState('write');
+  const [editorMode, setEditorMode] = useState<'markdown' | 'code'>('markdown');
+  const [subjects, setSubjects] = useState<string[]>(['Technology', 'Science', 'Math', 'History']);
+  const [newSubject, setNewSubject] = useState('');
   const [generatedCode, setGeneratedCode] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [previewHtml, setPreviewHtml] = useState('');
@@ -42,8 +49,36 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
       setTitle(blogToEdit.title);
       setContent(blogToEdit.content);
       setImageUrl(blogToEdit.imageUrl || blogToEdit.image_url || '');
+      setSubject(blogToEdit.subject || '');
+    }
+    
+    // Load subjects from local storage
+    const savedSubjects = localStorage.getItem('blogSubjects');
+    if (savedSubjects) {
+      setSubjects(JSON.parse(savedSubjects));
     }
   }, [blogToEdit]);
+  
+  const addNewSubject = () => {
+    if (!newSubject.trim()) {
+      toast.error('Please enter a subject name');
+      return;
+    }
+    
+    if (subjects.includes(newSubject.trim())) {
+      toast.error('This subject already exists');
+      return;
+    }
+    
+    const updatedSubjects = [...subjects, newSubject.trim()];
+    setSubjects(updatedSubjects);
+    setSubject(newSubject.trim());
+    setNewSubject('');
+    
+    // Save to local storage
+    localStorage.setItem('blogSubjects', JSON.stringify(updatedSubjects));
+    toast.success(`Added new subject: ${newSubject.trim()}`);
+  };
   
   const handleTemplateChange = (value: string) => {
     if (blogToEdit) {
@@ -69,6 +104,11 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
   };
 
   const insertFormatting = (format: string, customContent?: string) => {
+    if (editorMode === 'code') {
+      toast.info('Formatting options not available in code editor mode');
+      return;
+    }
+    
     const textArea = textAreaRef.current;
     if (!textArea) {
       toast.error('Text editor not found');
@@ -166,6 +206,7 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
       content,
       date,
       readTime,
+      subject,
       imageUrl: imageUrl || undefined
     };
     
@@ -178,8 +219,19 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
 
   const handlePreview = () => {
     try {
-      const html = marked.parse(content);
-      setPreviewHtml(`<h1>${title}</h1>${html}`);
+      let html;
+      
+      if (editorMode === 'code') {
+        // For web content, we'll pass the raw content to DevicePreview
+        // and let it parse the HTML, CSS, and JS
+        html = content;
+        setPreviewHtml(html);
+      } else {
+        // For markdown content, we'll parse it to HTML
+        html = marked.parse(content);
+        setPreviewHtml(`<h1>${title}</h1>${html}`);
+      }
+      
       setActiveTab('preview-device');
     } catch (error) {
       console.error('Error generating preview:', error);
@@ -212,6 +264,7 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
           content,
           readTime,
           read_time: readTime,
+          subject,
           imageUrl,
           image_url: imageUrl
         });
@@ -223,6 +276,7 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
           date,
           readTime,
           read_time: readTime,
+          subject,
           imageUrl: imageUrl || undefined,
           image_url: imageUrl || undefined
         };
@@ -245,31 +299,9 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
     toast.success('Code copied to clipboard!');
   };
 
-  const downloadBlogFile = () => {
-    if (!generatedCode) {
-      toast.error('Please generate code first');
-      return;
-    }
-    
-    const fileName = title.toLowerCase().replace(/\s+/g, '-') + '.json';
-    const blob = new Blob([generatedCode], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    toast.success(`File "${fileName}" downloaded successfully!`);
-  };
-
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="container max-w-4xl mx-auto my-8 p-6 glass rounded-lg animate-fade-in" onClick={(e) => e.stopPropagation()}>
+      <div className="container max-w-5xl mx-auto my-8 p-6 glass rounded-lg animate-fade-in" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">{blogToEdit ? 'Edit Blog' : 'Create New Blog'}</h2>
           <Button variant="ghost" size="icon" onClick={onClose}><X /></Button>
@@ -308,6 +340,48 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
               </SelectContent>
             </Select>
           </div>
+
+          <div className="w-1/3">
+            <Select value={subject} onValueChange={setSubject}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select subject" />
+              </SelectTrigger>
+              <SelectContent>
+                {subjects.map((subj) => (
+                  <SelectItem key={subj} value={subj}>
+                    {subj}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="flex items-center gap-1">
+                <PlusCircle className="h-4 w-4" />
+                Add Subject
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="flex gap-2 p-4 w-80">
+              <Input
+                value={newSubject}
+                onChange={(e) => setNewSubject(e.target.value)}
+                placeholder="Enter new subject"
+                className="flex-1"
+              />
+              <Button onClick={addNewSubject} size="sm">Add</Button>
+            </PopoverContent>
+          </Popover>
+          
+          <div className="ml-auto">
+            <Tabs value={editorMode} onValueChange={(value) => setEditorMode(value as 'markdown' | 'code')}>
+              <TabsList>
+                <TabsTrigger value="markdown">Markdown</TabsTrigger>
+                <TabsTrigger value="code">HTML/CSS/JS</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
@@ -318,21 +392,32 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
           </TabsList>
           
           <TabsContent value="write" className="mt-4">
-            <BlogEditorUtils onFormatInsert={insertFormatting} content={content} />
+            {editorMode === 'markdown' && <BlogEditorUtils onFormatInsert={insertFormatting} content={content} />}
             
-            <textarea
-              id="content-area"
-              ref={textAreaRef}
-              className="content-area w-full mt-4"
-              rows={15}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Start writing your blog content here..."
-            />
+            {editorMode === 'markdown' ? (
+              <textarea
+                id="content-area"
+                ref={textAreaRef}
+                className="content-area w-full mt-4"
+                rows={15}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Start writing your blog content here..."
+              />
+            ) : (
+              <div className="mt-4">
+                <CodeEditor
+                  value={content}
+                  onChange={setContent}
+                  height="400px"
+                  isWebEditor={true}
+                />
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="preview-device" className="mt-4">
-            <DevicePreview contentHtml={previewHtml} />
+            <DevicePreview contentHtml={previewHtml} isWebContent={editorMode === 'code'} />
           </TabsContent>
           
           <TabsContent value="preview-code" className="mt-4">
@@ -341,10 +426,12 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
                 <h3 className="text-lg font-medium">Generated Blog Code</h3>
                 <div className="flex gap-2">
                   <Button onClick={copyToClipboard} variant="secondary" size="sm">Copy Code</Button>
-                  <Button onClick={downloadBlogFile} variant="secondary" size="sm">
-                    <FileDown size={16} className="mr-1" />
-                    Download JSON
-                  </Button>
+                  <PdfExport
+                    content={content}
+                    title={title}
+                    fileName={`${title.replace(/\s+/g, '-').toLowerCase()}.pdf`}
+                    isWebContent={editorMode === 'code'}
+                  />
                 </div>
               </div>
               <pre className="whitespace-pre-wrap text-sm overflow-x-auto p-4 bg-black/30 rounded border border-eduAccent/20">

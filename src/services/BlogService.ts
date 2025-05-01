@@ -1,3 +1,4 @@
+
 import { supabase, Blog } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -20,7 +21,8 @@ export const BlogService = {
       return (data || []).map(blog => ({
         ...blog,
         readTime: blog.read_time,
-        imageUrl: blog.image_url || undefined
+        imageUrl: blog.image_url || undefined,
+        subject: blog.subject || undefined
       }));
     } catch (error) {
       console.error('Error in getBlogs:', error);
@@ -38,7 +40,8 @@ export const BlogService = {
         content: blogData.content,
         date: blogData.date,
         read_time: blogData.readTime || blogData.read_time,
-        image_url: blogData.imageUrl || blogData.image_url
+        image_url: blogData.imageUrl || blogData.image_url,
+        subject: blogData.subject
       };
 
       const { data, error } = await supabase
@@ -148,7 +151,8 @@ export const BlogService = {
         id: `local-${Date.now()}`,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        read_time: blog.readTime || blog.read_time // Make sure read_time is set
+        read_time: blog.readTime || blog.read_time, // Make sure read_time is set
+        subject: blog.subject
       };
       
       savedBlogs.push(newBlog);
@@ -170,7 +174,8 @@ export const BlogService = {
       return savedBlogs.map((blog: any) => ({
         ...blog,
         readTime: blog.readTime || blog.read_time,
-        imageUrl: blog.imageUrl || blog.image_url
+        imageUrl: blog.imageUrl || blog.image_url,
+        subject: blog.subject
       }));
     } catch (error) {
       console.error('Error getting blogs from local storage:', error);
