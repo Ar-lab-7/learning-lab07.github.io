@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Bold, Italic, List, Image, Link, Heading, Check, Type, AlignLeft, Table, FileDown, Save, Eye, FilePdf, Code, PlusCircle } from 'lucide-react';
+import { X, Bold, Italic, List, Image, Link as LinkIcon, Heading, Check, Type, AlignLeft, Table, FileDown, Save, Eye, FileDown as FileDownIcon, Code, PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import DevicePreview from './DevicePreview';
 import { BlogService } from '@/services/BlogService';

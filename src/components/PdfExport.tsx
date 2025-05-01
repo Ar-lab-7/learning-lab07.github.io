@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { FilePdf } from 'lucide-react';
+import { FileDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface PdfExportProps {
@@ -167,7 +167,7 @@ const PdfExport: React.FC<PdfExportProps> = ({
       size="sm" 
       className="gap-1"
     >
-      <FilePdf className="h-4 w-4 mr-1" />
+      <FileDown className="h-4 w-4 mr-1" />
       Export PDF
     </Button>
   );

@@ -32,7 +32,7 @@ export const BlogService = {
   },
 
   // Create a new blog in Supabase
-  createBlog: async (blogData: Omit<Blog, 'id' | 'created_at' | 'updated_at' | 'author_id'>): Promise<Blog | null> => {
+  createBlog: async (blogData: Omit<Blog, 'id' | 'created_at' | 'updated_at' | 'author_id'> & {subject?: string}): Promise<Blog | null> => {
     try {
       // Ensure we have the database fields set
       const dbBlogData = {
@@ -73,7 +73,7 @@ export const BlogService = {
   },
 
   // Update an existing blog
-  updateBlog: async (id: string, blogData: Partial<Blog>): Promise<Blog | null> => {
+  updateBlog: async (id: string, blogData: Partial<Blog> & {subject?: string}): Promise<Blog | null> => {
     try {
       // Convert component field names to database field names if needed
       const dbUpdateData: any = {
@@ -143,7 +143,7 @@ export const BlogService = {
   },
 
   // Save a blog to local storage (for non-developer users)
-  saveToLocalStorage: (blog: Omit<Blog, 'id' | 'created_at' | 'updated_at' | 'author_id'>) => {
+  saveToLocalStorage: (blog: Omit<Blog, 'id' | 'created_at' | 'updated_at' | 'author_id'> & {subject?: string}) => {
     try {
       const savedBlogs = JSON.parse(localStorage.getItem('userBlogs') || '[]');
       const newBlog = {

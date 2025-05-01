@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { X, Send, Loader2, Download, FilePdf } from 'lucide-react';
+import { X, Send, Loader2, Download, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
 import PdfExport from './PdfExport';
 
