@@ -65,12 +65,12 @@ export const TrafficService = {
       const pageData = await PageviewService.getPageData(WEBSITE_ID);
       
       // Get device and browser stats using dedicated services
-      const deviceStats = await this.getDeviceStats();
-      const browserStats = await this.getBrowserStats();
+      const deviceStats = await DeviceService.getDeviceStats(WEBSITE_ID);
+      const browserStats = await BrowserService.getBrowserStats(WEBSITE_ID);
       
-      // Ensure we always return objects, never undefined
-      const byDevice = deviceStats ?? {};
-      const byBrowser = browserStats ?? {};
+      // Fix the undefined checks with proper null coalescing
+      const byDevice = deviceStats || {};
+      const byBrowser = browserStats || {};
       
       return {
         totalViews: analyticsData.totalViews,
