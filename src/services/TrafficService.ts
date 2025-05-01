@@ -19,6 +19,8 @@ export const TrafficService = {
   // Record a new pageview when a user visits a page
   recordPageview: async () => {
     try {
+      console.log('Recording pageview for:', window.location.pathname);
+      
       // Record the pageview on backend via Supabase RPC
       const { data, error } = await supabase.rpc('record_pageview', {
         site_id: WEBSITE_ID,
@@ -39,17 +41,38 @@ export const TrafficService = {
 
   // Get pageviews filtered by time period
   getPageviews: async (period: 'today' | 'week' | 'month' | 'all' = 'all') => {
-    return await PageviewService.getPageviews(WEBSITE_ID, period);
+    try {
+      console.log('Getting pageviews for period:', period);
+      return await PageviewService.getPageviews(WEBSITE_ID, period);
+    } catch (error) {
+      console.error('Error in getPageviews:', error);
+      toast.error('Failed to fetch pageviews');
+      return [];
+    }
   },
   
   // Get browser statistics
   getBrowserStats: async () => {
-    return await BrowserService.getBrowserStats(WEBSITE_ID);
+    try {
+      console.log('Getting browser statistics');
+      return await BrowserService.getBrowserStats(WEBSITE_ID);
+    } catch (error) {
+      console.error('Error in getBrowserStats:', error);
+      toast.error('Failed to fetch browser statistics');
+      return {};
+    }
   },
   
   // Get device statistics
   getDeviceStats: async () => {
-    return await DeviceService.getDeviceStats(WEBSITE_ID);
+    try {
+      console.log('Getting device statistics');
+      return await DeviceService.getDeviceStats(WEBSITE_ID);
+    } catch (error) {
+      console.error('Error in getDeviceStats:', error);
+      toast.error('Failed to fetch device statistics');
+      return {};
+    }
   },
 
   // Get comprehensive traffic statistics

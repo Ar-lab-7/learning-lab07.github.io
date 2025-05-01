@@ -12,6 +12,8 @@ import TrafficPage from "./pages/TrafficPage";
 import AdminRoute from "./components/AdminRoute";
 import { TrafficService } from "./services/TrafficService";
 import LoginPage from "./pages/LoginPage";
+import QuizPage from "./pages/QuizPage";
+import QuizTakePage from "./pages/QuizTakePage";
 
 // Create a new query client
 const queryClient = new QueryClient();
@@ -39,6 +41,8 @@ const App = () => {
                   </AdminRoute>
                 } />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/quizzes" element={<QuizPage />} />
+                <Route path="/quiz/:id" element={<QuizTakePage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

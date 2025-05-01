@@ -38,6 +38,27 @@ export type Blog = {
   author_id?: string;
 };
 
+// Type for quiz data
+export type Quiz = {
+  id: string;
+  title: string;
+  questions: QuizQuestion[];
+  difficulty: string;
+  created_at: string;
+  expires_at: string;
+  password?: string;
+  author_id?: string;
+};
+
+export type QuizQuestion = {
+  id: string;
+  question: string;
+  type: 'mcq' | 'truefalse';
+  options?: string[];
+  correctAnswer: string | boolean;
+  explanation?: string;
+};
+
 // Simplified developer login function for demo
 export const validateDeveloperLogin = async (username: string, password: string): Promise<UserProfile | null> => {
   console.log('Attempting login with:', username);

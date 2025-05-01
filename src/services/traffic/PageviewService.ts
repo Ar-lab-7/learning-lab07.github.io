@@ -7,6 +7,7 @@ export const PageviewService = {
   // Get pageviews filtered by time period
   getPageviews: async (websiteId: string, period: 'today' | 'week' | 'month' | 'all' = 'all') => {
     try {
+      console.log('Fetching pageviews for period:', period);
       let query = supabase
         .from('pageviews')
         .select('*')
@@ -33,6 +34,7 @@ export const PageviewService = {
         return [];
       }
       
+      console.log(`Successfully fetched ${data?.length || 0} pageviews`);
       return data || [];
     } catch (error) {
       console.error('Error in getPageviews:', error);
@@ -44,6 +46,7 @@ export const PageviewService = {
   // Get page URL statistics
   getPageData: async (websiteId: string): Promise<StatRecord> => {
     try {
+      console.log('Fetching page data for website:', websiteId);
       const { data, error } = await supabase
         .from('pageviews')
         .select('page_url')
@@ -63,6 +66,7 @@ export const PageviewService = {
         }
       });
       
+      console.log(`Successfully processed page data: ${Object.keys(byPage).length} unique pages`);
       return byPage;
     } catch (error) {
       console.error('Error in getPageData:', error);
