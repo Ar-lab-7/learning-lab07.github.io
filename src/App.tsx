@@ -19,36 +19,38 @@ import QuizTakePage from "./pages/QuizTakePage";
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Record pageview on each navigation
+  // Record pageview on each navigation - wrapped in useEffect hook to ensure it runs after component mounts
   useEffect(() => {
-    TrafficService.recordPageview();
+    try {
+      TrafficService.recordPageview();
+      console.log("Pageview recorded successfully");
+    } catch (error) {
+      console.error("Error recording pageview:", error);
+    }
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        {/* Wrap TooltipProvider in a Fragment to ensure it has a parent React component */}
-        <Fragment>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/traffic" element={
-                  <AdminRoute>
-                    <TrafficPage />
-                  </AdminRoute>
-                } />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/quizzes" element={<QuizPage />} />
-                <Route path="/quiz/:id" element={<QuizTakePage />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </Fragment>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/traffic" element={
+                <AdminRoute>
+                  <TrafficPage />
+                </AdminRoute>
+              } />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/quizzes" element={<QuizPage />} />
+              <Route path="/quiz/:id" element={<QuizTakePage />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
