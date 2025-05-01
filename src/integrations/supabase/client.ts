@@ -31,6 +31,7 @@ export type Blog = {
   readTime?: string;
   image_url?: string;
   imageUrl?: string;
+  subject?: string;
   created_at?: string;
   updated_at?: string;
   author_id?: string;
