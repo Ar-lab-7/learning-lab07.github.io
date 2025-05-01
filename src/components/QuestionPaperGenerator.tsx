@@ -7,6 +7,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { X, Send, Loader2, Download, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
 import PdfExport from './PdfExport';
+import { supabase } from '@/integrations/supabase/client';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface QuestionPaperGeneratorProps {
   onClose: () => void;
@@ -19,6 +22,14 @@ interface QuestionPaperGeneratorProps {
   }[];
 }
 
+interface Question {
+  id: number;
+  text: string;
+  type: 'multiple-choice' | 'short-answer' | 'true-false';
+  options?: string[];
+  answer: string;
+}
+
 const QuestionPaperGenerator: React.FC<QuestionPaperGeneratorProps> = ({ onClose, blogs }) => {
   const [topic, setTopic] = useState('');
   const [selectedBlog, setSelectedBlog] = useState('');
@@ -28,7 +39,11 @@ const QuestionPaperGenerator: React.FC<QuestionPaperGeneratorProps> = ({ onClose
   const [additionalInstructions, setAdditionalInstructions] = useState('');
   const [generatedPaper, setGeneratedPaper] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([]);
+  const [generatedQuestions, setGeneratedQuestions] = useState<Question[]>([]);
+  const [isQuizMode, setIsQuizMode] = useState(false);
+  const [quizDuration, setQuizDuration] = useState('24');
+  const [quizPassword, setQuizPassword] = useState('');
+  const [showAnswers, setShowAnswers] = useState(false);
   
   const generatePaper = async () => {
     if (!topic.trim() && !selectedBlog) {
@@ -42,7 +57,7 @@ const QuestionPaperGenerator: React.FC<QuestionPaperGeneratorProps> = ({ onClose
       // Choose the content to base questions on
       let contentToUse = topic;
       
-      if (selectedBlog) {
+      if (selectedBlog && selectedBlog !== "custom-topic") {
         const selectedBlogContent = blogs.find(blog => blog.title === selectedBlog);
         if (selectedBlogContent) {
           contentToUse = selectedBlogContent.content;
@@ -54,12 +69,12 @@ const QuestionPaperGenerator: React.FC<QuestionPaperGeneratorProps> = ({ onClose
       paper += `## ${difficultyLevel.charAt(0).toUpperCase() + difficultyLevel.slice(1)} Difficulty - ${numQuestions} Questions\n\n`;
       
       // Generate different types of questions based on questionType
-      const generatedQuestionsArray = [];
+      const generatedQuestionsArray: Question[] = [];
       
       switch (questionType) {
         case 'multiple-choice':
           for (let i = 1; i <= parseInt(numQuestions); i++) {
-            const question = {
+            const question: Question = {
               id: i,
               text: `Question ${i}: What is the main concept discussed in the content?`,
               type: 'multiple-choice',
@@ -74,16 +89,21 @@ const QuestionPaperGenerator: React.FC<QuestionPaperGeneratorProps> = ({ onClose
             generatedQuestionsArray.push(question);
             
             paper += `### Question ${i}\n${question.text}\n\n`;
-            question.options.forEach(opt => {
-              paper += `- ${opt}\n`;
-            });
+            if (question.options) {
+              question.options.forEach(opt => {
+                paper += `- ${opt}\n`;
+              });
+            }
+            if (showAnswers) {
+              paper += `\n**Answer: ${question.answer}**\n`;
+            }
             paper += '\n';
           }
           break;
           
         case 'short-answer':
           for (let i = 1; i <= parseInt(numQuestions); i++) {
-            const question = {
+            const question: Question = {
               id: i,
               text: `Question ${i}: Explain briefly the significance of the key point made about ${topic || 'this topic'}.`,
               type: 'short-answer',
@@ -92,12 +112,15 @@ const QuestionPaperGenerator: React.FC<QuestionPaperGeneratorProps> = ({ onClose
             generatedQuestionsArray.push(question);
             
             paper += `### Question ${i}\n${question.text}\n\n_Answer in 2-3 sentences._\n\n`;
+            if (showAnswers) {
+              paper += `**Sample Answer: ${question.answer}**\n\n`;
+            }
           }
           break;
           
         case 'true-false':
           for (let i = 1; i <= parseInt(numQuestions); i++) {
-            const question = {
+            const question: Question = {
               id: i,
               text: `Question ${i}: The document suggests that ${topic || 'this concept'} is the most important factor in this field.`,
               type: 'true-false',
@@ -106,13 +129,16 @@ const QuestionPaperGenerator: React.FC<QuestionPaperGeneratorProps> = ({ onClose
             generatedQuestionsArray.push(question);
             
             paper += `### Question ${i}\n${question.text}\n\n- [ ] True\n- [ ] False\n\n`;
+            if (showAnswers) {
+              paper += `**Answer: ${question.answer}**\n\n`;
+            }
           }
           break;
           
         case 'mixed':
         default:
           for (let i = 1; i <= parseInt(numQuestions); i++) {
-            let question;
+            let question: Question;
             
             if (i % 3 === 0) {
               question = {
@@ -122,6 +148,9 @@ const QuestionPaperGenerator: React.FC<QuestionPaperGeneratorProps> = ({ onClose
                 answer: i % 2 === 0 ? 'True' : 'False'
               };
               paper += `### Question ${i} (True/False)\n${question.text}\n\n- [ ] True\n- [ ] False\n\n`;
+              if (showAnswers) {
+                paper += `**Answer: ${question.answer}**\n\n`;
+              }
             } else if (i % 3 === 1) {
               question = {
                 id: i,
@@ -136,10 +165,16 @@ const QuestionPaperGenerator: React.FC<QuestionPaperGeneratorProps> = ({ onClose
                 answer: 'B'
               };
               paper += `### Question ${i} (Multiple Choice)\n${question.text}\n\n`;
-              question.options.forEach(opt => {
-                paper += `- ${opt}\n`;
-              });
-              paper += '\n';
+              if (question.options) {
+                question.options.forEach(opt => {
+                  paper += `- ${opt}\n`;
+                });
+              }
+              if (showAnswers) {
+                paper += `\n**Answer: ${question.answer}**\n\n`;
+              } else {
+                paper += '\n';
+              }
             } else {
               question = {
                 id: i,
@@ -148,6 +183,9 @@ const QuestionPaperGenerator: React.FC<QuestionPaperGeneratorProps> = ({ onClose
                 answer: 'A practical application would involve implementation in a relevant context.'
               };
               paper += `### Question ${i} (Short Answer)\n${question.text}\n\n_Answer in 3-4 sentences._\n\n`;
+              if (showAnswers) {
+                paper += `**Sample Answer: ${question.answer}**\n\n`;
+              }
             }
             
             generatedQuestionsArray.push(question);
@@ -159,9 +197,49 @@ const QuestionPaperGenerator: React.FC<QuestionPaperGeneratorProps> = ({ onClose
         paper += `## Additional Instructions\n\n${additionalInstructions}\n`;
       }
       
+      // Add quiz information if in quiz mode
+      if (isQuizMode) {
+        paper += `\n## Quiz Competition\nThis quiz is available for 24 hours.\n`;
+        paper += `Difficulty: ${difficultyLevel}\n`;
+        paper += `Total Questions: ${numQuestions}\n`;
+        if (quizPassword) {
+          paper += `This quiz is password protected.\n`;
+        }
+      }
+      
       setGeneratedPaper(paper);
       setGeneratedQuestions(generatedQuestionsArray);
       toast.success('Question paper generated successfully!');
+      
+      // Save to Supabase if it's a quiz
+      if (isQuizMode) {
+        try {
+          const expiresAt = new Date();
+          expiresAt.setHours(expiresAt.getHours() + parseInt(quizDuration));
+          
+          const { data, error } = await supabase
+            .from('quizzes')
+            .insert({
+              title: topic || selectedBlog,
+              questions: generatedQuestionsArray,
+              difficulty: difficultyLevel,
+              expires_at: expiresAt.toISOString(),
+              password: quizPassword || null
+            })
+            .select('id')
+            .single();
+            
+          if (error) {
+            console.error('Error saving quiz:', error);
+            toast.error('Failed to create online quiz');
+          } else {
+            toast.success(`Quiz created! Available for ${quizDuration} hours`);
+          }
+        } catch (error) {
+          console.error('Error creating quiz:', error);
+          toast.error('Failed to create online quiz');
+        }
+      }
     } catch (error) {
       console.error('Error generating paper:', error);
       toast.error('Failed to generate question paper');
@@ -270,6 +348,46 @@ const QuestionPaperGenerator: React.FC<QuestionPaperGeneratorProps> = ({ onClose
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="flex items-center space-x-2 pt-2">
+                <Switch id="show-answers" checked={showAnswers} onCheckedChange={setShowAnswers} />
+                <Label htmlFor="show-answers">Include answers in generated paper</Label>
+              </div>
+              
+              <div className="flex items-center space-x-2 pt-2">
+                <Switch id="quiz-mode" checked={isQuizMode} onCheckedChange={setIsQuizMode} />
+                <Label htmlFor="quiz-mode">Create as online quiz competition</Label>
+              </div>
+              
+              {isQuizMode && (
+                <div className="space-y-4 pl-6 border-l-2 border-accent/30 mt-2">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Quiz Duration (hours)</label>
+                    <Select value={quizDuration} onValueChange={setQuizDuration}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select duration" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1 hour</SelectItem>
+                        <SelectItem value="6">6 hours</SelectItem>
+                        <SelectItem value="12">12 hours</SelectItem>
+                        <SelectItem value="24">24 hours</SelectItem>
+                        <SelectItem value="48">48 hours</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Quiz Password (optional)</label>
+                    <Input 
+                      type="password"
+                      value={quizPassword} 
+                      onChange={(e) => setQuizPassword(e.target.value)}
+                      placeholder="Leave empty for no password"
+                    />
+                  </div>
+                </div>
+              )}
               
               <div>
                 <label className="block text-sm font-medium mb-1">Additional Instructions</label>
@@ -333,6 +451,8 @@ const QuestionPaperGenerator: React.FC<QuestionPaperGeneratorProps> = ({ onClose
                         return <div key={index} className="flex items-start mt-1"><span className="mr-2">•</span><span>{line.substring(2)}</span></div>;
                       } else if (line.trim().startsWith('_')) {
                         return <p key={index} className="italic text-muted-foreground">{line}</p>;
+                      } else if (line.trim().startsWith('**') && line.trim().endsWith('**')) {
+                        return <p key={index} className="font-bold text-accent">{line}</p>;
                       } else if (line.trim() === '') {
                         return <div key={index} className="h-2"></div>;
                       } else {

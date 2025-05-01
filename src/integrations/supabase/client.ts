@@ -32,6 +32,7 @@ export type Blog = {
   image_url?: string;
   imageUrl?: string;
   subject?: string;
+  password?: string;
   created_at?: string;
   updated_at?: string;
   author_id?: string;

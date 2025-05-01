@@ -22,7 +22,8 @@ export const BlogService = {
         ...blog,
         readTime: blog.read_time,
         imageUrl: blog.image_url || undefined,
-        subject: blog.subject || undefined
+        subject: blog.subject || undefined,
+        password: blog.password || undefined
       }));
     } catch (error) {
       console.error('Error in getBlogs:', error);
@@ -32,7 +33,7 @@ export const BlogService = {
   },
 
   // Create a new blog in Supabase
-  createBlog: async (blogData: Omit<Blog, 'id' | 'created_at' | 'updated_at' | 'author_id'> & {subject?: string}): Promise<Blog | null> => {
+  createBlog: async (blogData: Omit<Blog, 'id' | 'created_at' | 'updated_at' | 'author_id'> & {subject?: string, password?: string}): Promise<Blog | null> => {
     try {
       // Ensure we have the database fields set
       const dbBlogData = {
@@ -41,7 +42,8 @@ export const BlogService = {
         date: blogData.date,
         read_time: blogData.readTime || blogData.read_time,
         image_url: blogData.imageUrl || blogData.image_url,
-        subject: blogData.subject
+        subject: blogData.subject,
+        password: blogData.password
       };
 
       const { data, error } = await supabase
@@ -73,7 +75,7 @@ export const BlogService = {
   },
 
   // Update an existing blog
-  updateBlog: async (id: string, blogData: Partial<Blog> & {subject?: string}): Promise<Blog | null> => {
+  updateBlog: async (id: string, blogData: Partial<Blog> & {subject?: string, password?: string}): Promise<Blog | null> => {
     try {
       // Convert component field names to database field names if needed
       const dbUpdateData: any = {
@@ -119,6 +121,31 @@ export const BlogService = {
     }
   },
 
+  // Check blog password
+  checkPassword: async (blogId: string, password: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('blogs')
+        .select('password')
+        .eq('id', blogId)
+        .single();
+
+      if (error) {
+        console.error('Error checking password:', error);
+        return false;
+      }
+
+      // If no password set, allow access
+      if (!data?.password) return true;
+      
+      // Check password match
+      return data.password === password;
+    } catch (error) {
+      console.error('Error in checkPassword:', error);
+      return false;
+    }
+  },
+
   // Delete a blog
   deleteBlog: async (id: string): Promise<boolean> => {
     try {
@@ -143,7 +170,7 @@ export const BlogService = {
   },
 
   // Save a blog to local storage (for non-developer users)
-  saveToLocalStorage: (blog: Omit<Blog, 'id' | 'created_at' | 'updated_at' | 'author_id'> & {subject?: string}) => {
+  saveToLocalStorage: (blog: Omit<Blog, 'id' | 'created_at' | 'updated_at' | 'author_id'> & {subject?: string, password?: string}) => {
     try {
       const savedBlogs = JSON.parse(localStorage.getItem('userBlogs') || '[]');
       const newBlog = {
@@ -152,7 +179,8 @@ export const BlogService = {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         read_time: blog.readTime || blog.read_time, // Make sure read_time is set
-        subject: blog.subject
+        subject: blog.subject,
+        password: blog.password
       };
       
       savedBlogs.push(newBlog);
@@ -175,7 +203,8 @@ export const BlogService = {
         ...blog,
         readTime: blog.readTime || blog.read_time,
         imageUrl: blog.imageUrl || blog.image_url,
-        subject: blog.subject
+        subject: blog.subject,
+        password: blog.password
       }));
     } catch (error) {
       console.error('Error getting blogs from local storage:', error);

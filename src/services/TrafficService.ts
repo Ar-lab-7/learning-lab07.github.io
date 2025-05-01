@@ -55,31 +55,42 @@ export const TrafficService = {
   // Get comprehensive traffic statistics
   getTrafficStats: async (): Promise<TrafficStats> => {
     try {
+      console.log('Fetching traffic statistics...');
+      
       // Get total views and unique visitors
       const analyticsData = await TrafficAnalyticsService.getBasicAnalytics(WEBSITE_ID);
+      console.log('Analytics data:', analyticsData);
       
       // Get date data
       const dateData = await DateService.getDateData(WEBSITE_ID);
+      console.log('Date data:', dateData);
       
       // Get page data
       const pageData = await PageviewService.getPageData(WEBSITE_ID);
+      console.log('Page data:', pageData);
       
       // Get device and browser stats using dedicated services
       const deviceStats = await DeviceService.getDeviceStats(WEBSITE_ID);
+      console.log('Device stats:', deviceStats);
+      
       const browserStats = await BrowserService.getBrowserStats(WEBSITE_ID);
+      console.log('Browser stats:', browserStats);
       
       // Fix the undefined checks with proper null coalescing
       const byDevice = deviceStats || {};
       const byBrowser = browserStats || {};
       
-      return {
+      const result = {
         totalViews: analyticsData.totalViews,
         uniqueVisitors: analyticsData.uniqueVisitors,
-        byDate: dateData,
-        byPage: pageData,
+        byDate: dateData || {},
+        byPage: pageData || {},
         byDevice,
         byBrowser
       };
+      
+      console.log('Final traffic stats:', result);
+      return result;
     } catch (error) {
       console.error('Error fetching traffic stats:', error);
       toast.error('Failed to fetch traffic statistics');

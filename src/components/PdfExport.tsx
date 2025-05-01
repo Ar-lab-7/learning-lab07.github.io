@@ -86,50 +86,57 @@ const PdfExport: React.FC<PdfExportProps> = ({
       // Temporarily add to document for rendering
       document.body.appendChild(tempDiv);
       
-      // Get PDF dimensions
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
+      try {
+        // Get PDF dimensions
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      // Render the content to canvas
-      const canvas = await html2canvas(tempDiv, {
-        scale: 2,
-        backgroundColor: 'white',
-        logging: false
-      });
-      
-      // Calculate the number of pages
-      const imgData = canvas.toDataURL('image/png');
-      const imgProps = pdf.getImageProperties(imgData);
-      const imgWidth = pdfWidth;
-      const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
-      
-      let heightLeft = imgHeight;
-      let position = 0;
-      
-      // Add first page
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
-      
-      // Add subsequent pages if needed
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
+        // Render the content to canvas
+        const canvas = await html2canvas(tempDiv, {
+          scale: 2,
+          backgroundColor: 'white',
+          logging: false
+        });
+        
+        // Calculate the number of pages
+        const imgData = canvas.toDataURL('image/png');
+        const imgProps = pdf.getImageProperties(imgData);
+        const imgWidth = pdfWidth;
+        const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+        
+        let heightLeft = imgHeight;
+        let position = 0;
+        
+        // Add first page
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pdfHeight;
+        
+        // Add subsequent pages if needed
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pdfHeight;
+        }
+        
+        // Save the PDF
+        const safeName = fileName || `${title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`;
+        pdf.save(safeName);
+        
+        toast.success('PDF downloaded successfully!');
+      } catch (error) {
+        console.error('Error rendering PDF:', error);
+        toast.error('Failed to generate PDF: Rendering error');
+      } finally {
+        // Clean up
+        document.body.removeChild(tempDiv);
+        toast.dismiss();
       }
-      
-      // Save the PDF
-      const safeName = fileName || `${title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`;
-      pdf.save(safeName);
-      
-      // Clean up
-      document.body.removeChild(tempDiv);
-      toast.dismiss();
-      toast.success('PDF downloaded successfully!');
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast.error('Failed to generate PDF');
+      toast.dismiss();
     }
   };
   
