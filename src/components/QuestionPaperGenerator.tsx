@@ -204,7 +204,7 @@ const QuestionPaperGenerator: React.FC<QuestionPaperGeneratorProps> = ({ onClose
                     <SelectValue placeholder="Select a blog" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">-- Enter custom topic below --</SelectItem>
+                    <SelectItem value="custom-topic">-- Enter custom topic below --</SelectItem>
                     {blogs.map((blog, index) => (
                       <SelectItem key={index} value={blog.title}>
                         {blog.title} {blog.subject && `(${blog.subject})`}
@@ -220,7 +220,7 @@ const QuestionPaperGenerator: React.FC<QuestionPaperGeneratorProps> = ({ onClose
                   value={topic} 
                   onChange={(e) => setTopic(e.target.value)}
                   placeholder="Enter topic (optional if blog selected)"
-                  disabled={!!selectedBlog}
+                  disabled={!!selectedBlog && selectedBlog !== "custom-topic"}
                 />
               </div>
               
