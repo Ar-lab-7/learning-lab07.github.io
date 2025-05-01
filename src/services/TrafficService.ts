@@ -179,9 +179,13 @@ export const TrafficService = {
         }
       });
 
-      // Use existing methods for device and browser stats with null checking
-      const byDevice = await this.getDeviceStats() || {};
-      const byBrowser = await this.getBrowserStats() || {};
+      // Use existing methods for device and browser stats with proper type handling
+      const deviceStats = await this.getDeviceStats();
+      const browserStats = await this.getBrowserStats();
+      
+      // Ensure we always return objects, never undefined
+      const byDevice = deviceStats ?? {};
+      const byBrowser = browserStats ?? {};
 
       return {
         totalViews,
