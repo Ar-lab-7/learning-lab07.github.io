@@ -14,7 +14,7 @@ interface QuizTakerProps {
   title: string;
   questions: QuizQuestion[];
   difficulty: string;
-  password?: string;
+  password?: string | null;
   onQuizComplete?: (score: number, total: number) => void;
 }
 
@@ -163,24 +163,24 @@ const QuizTaker: React.FC<QuizTakerProps> = ({
                   {question.type === 'truefalse' && (
                     <div className="grid gap-2">
                       <div className={`p-2 rounded-md ${
-                        question.correctAnswer === true
+                        String(question.correctAnswer).toLowerCase() === 'true'
                           ? 'bg-green-100 dark:bg-green-900/20'
-                          : answers[i] === true
+                          : answers[i] === true || answers[i] === 'true'
                             ? 'bg-red-100 dark:bg-red-900/20'
                             : ''
                       }`}>
                         True
-                        {question.correctAnswer === true && ' ✓'}
+                        {String(question.correctAnswer).toLowerCase() === 'true' && ' ✓'}
                       </div>
                       <div className={`p-2 rounded-md ${
-                        question.correctAnswer === false
+                        String(question.correctAnswer).toLowerCase() === 'false'
                           ? 'bg-green-100 dark:bg-green-900/20' 
-                          : answers[i] === false
+                          : answers[i] === false || answers[i] === 'false'
                             ? 'bg-red-100 dark:bg-red-900/20'
                             : ''
                       }`}>
                         False
-                        {question.correctAnswer === false && ' ✓'}
+                        {String(question.correctAnswer).toLowerCase() === 'false' && ' ✓'}
                       </div>
                     </div>
                   )}
