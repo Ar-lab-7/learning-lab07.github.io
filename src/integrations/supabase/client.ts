@@ -46,7 +46,7 @@ export type Quiz = {
   difficulty: string;
   created_at: string;
   expires_at: string;
-  password?: string;
+  password?: string | null; // Updated to allow null
   author_id?: string;
 };
 

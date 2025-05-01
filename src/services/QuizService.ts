@@ -16,7 +16,7 @@ export const QuizService = {
           questions: quizData.questions,
           difficulty: quizData.difficulty,
           expires_at: quizData.expires_at,
-          password: quizData.password
+          password: quizData.password || null // Ensure null is used instead of undefined
         })
         .select()
         .single();
