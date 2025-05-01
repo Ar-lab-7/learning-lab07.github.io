@@ -16,6 +16,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { addDays } from 'date-fns';
+
+interface QuizGeneratorProps {
+  onClose?: () => void;
+}
 
 interface Question {
   id: string;
@@ -26,7 +31,7 @@ interface Question {
   type: 'multiple-choice' | 'true-false';
 }
 
-const QuizGenerator: React.FC = () => {
+const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onClose }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [questions, setQuestions] = useState<Question[]>([
@@ -203,34 +208,37 @@ const QuizGenerator: React.FC = () => {
     setIsSubmitting(true);
     
     try {
+      // Create an expiration date (24 hours from now)
+      const expiresAt = addDays(new Date(), 1).toISOString();
+      
       const quizData = {
         title,
         description,
         questions: questions.map(q => ({
-          text: q.text,
+          id: q.id,
+          question: q.text,
+          type: q.type === 'true-false' ? 'truefalse' : 'mcq',
           options: q.options,
-          correctOption: q.correctOption,
+          correctAnswer: q.type === 'true-false' 
+            ? q.options[q.correctOption].toLowerCase() === 'true' 
+            : q.options[q.correctOption],
           explanation: q.explanation,
-          type: q.type
         })),
-        isPublic,
-        timeLimit: timeLimit ? parseInt(timeLimit) : null,
-        passingScore: parseInt(passingScore) || 70,
-        tags,
-        settings: {
-          showExplanation,
-          shuffleQuestions,
-          shuffleOptions,
-          allowRetakes,
-          showResults,
-        },
-        quizPassword: password ? password : '',
+        difficulty,
+        expires_at: expiresAt,
+        password: requiresPassword ? password : undefined
       };
       
       const response = await QuizService.createQuiz(quizData);
       
-      toast.success("Quiz created successfully!");
-      navigate(`/quiz/${response.id}`);
+      if (response) {
+        toast.success("Quiz created successfully!");
+        if (onClose) {
+          onClose();
+        } else {
+          navigate(`/quiz/${response.id}`);
+        }
+      }
     } catch (error) {
       console.error("Error creating quiz:", error);
       toast.error("Failed to create quiz. Please try again.");
@@ -425,6 +433,25 @@ const QuizGenerator: React.FC = () => {
                       max="100"
                       className="mt-1"
                     />
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap gap-4">
+                  <div className="w-full md:w-[calc(50%-0.5rem)]">
+                    <Label htmlFor="difficulty">Difficulty</Label>
+                    <Select 
+                      value={difficulty} 
+                      onValueChange={setDifficulty}
+                    >
+                      <SelectTrigger id="difficulty" className="mt-1">
+                        <SelectValue placeholder="Select difficulty" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="easy">Easy</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="hard">Hard</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 
