@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, BarChart, Calendar, Globe, Laptop, Smartphone, Tablet } from 'lucide-react';
-import { TrafficService, TrafficStats } from '@/services/TrafficService';
+import { TrafficService } from '@/services/TrafficService';
+import { TrafficStats } from '@/services/traffic/TrafficTypes';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   ResponsiveContainer, 
