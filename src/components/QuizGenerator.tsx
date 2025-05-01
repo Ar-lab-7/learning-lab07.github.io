@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { addDays } from 'date-fns';
+import { QuizQuestion } from '@/integrations/supabase/client';
 
 interface QuizGeneratorProps {
   onClose?: () => void;
@@ -217,7 +219,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onClose }) => {
         questions: questions.map(q => ({
           id: q.id,
           question: q.text,
-          type: q.type === 'true-false' ? 'truefalse' : 'mcq',
+          type: q.type === 'true-false' ? 'truefalse' as const : 'mcq' as const,
           options: q.options,
           correctAnswer: q.type === 'true-false' 
             ? q.options[q.correctOption].toLowerCase() === 'true' 
