@@ -133,17 +133,21 @@ export const TrafficService = {
   getTrafficStats: async (): Promise<TrafficStats> => {
     try {
       // Fetch total pageviews for this specific website
-      const { count: totalViews } = await supabase
+      const { count: totalViewsCount } = await supabase
         .from('pageviews')
         .select('*', { count: 'exact', head: true })
         .eq('website_id', WEBSITE_ID);
 
       // Fetch unique visitors for this website
-      const { count: uniqueVisitors } = await supabase
+      const { count: uniqueVisitorsCount } = await supabase
         .from('pageviews')
         .select('ip', { count: 'exact', head: true })
         .eq('website_id', WEBSITE_ID)
         .not('ip', 'is', null);
+
+      // Ensure we have valid numbers by using nullish coalescing operator
+      const totalViews = totalViewsCount ?? 0;
+      const uniqueVisitors = uniqueVisitorsCount ?? 0;
 
       // Fetch visits by date for this website
       const { data: dateData } = await supabase
@@ -180,8 +184,8 @@ export const TrafficService = {
       const byBrowser = await this.getBrowserStats();
 
       return {
-        totalViews: totalViews || 0,
-        uniqueVisitors: uniqueVisitors || 0,
+        totalViews,
+        uniqueVisitors,
         byDate,
         byPage,
         byDevice,
