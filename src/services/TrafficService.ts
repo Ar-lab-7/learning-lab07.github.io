@@ -179,9 +179,9 @@ export const TrafficService = {
         }
       });
 
-      // Use existing methods for device and browser stats
-      const byDevice = await this.getDeviceStats();
-      const byBrowser = await this.getBrowserStats();
+      // Use existing methods for device and browser stats with null checking
+      const byDevice = await this.getDeviceStats() || {};
+      const byBrowser = await this.getBrowserStats() || {};
 
       return {
         totalViews,
