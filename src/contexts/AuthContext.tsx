@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile } from '@/integrations/supabase/client';
 
@@ -11,6 +12,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Fix: Ensure AuthProvider is a proper React functional component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,6 +24,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       username: 'Developer',
       is_developer: true,
     };
+    
+    // Set the profile and loading state
     setProfile(defaultProfile);
     setIsLoading(false);
   }, []);
