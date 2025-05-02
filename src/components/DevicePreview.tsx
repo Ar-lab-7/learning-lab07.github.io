@@ -10,19 +10,7 @@ interface DevicePreviewProps {
 
 const DevicePreview: React.FC<DevicePreviewProps> = ({ contentHtml, isWebContent = false }) => {
   const [activeDevice, setActiveDevice] = useState('desktop');
-  const [htmlContent, setHtmlContent] = useState('');
   
-  useEffect(() => {
-    if (isWebContent) {
-      try {
-        // Process HTML/CSS/JS content if needed
-        // For now, we'll pass it directly
-      } catch (error) {
-        console.error('Error processing web content:', error);
-      }
-    }
-  }, [contentHtml, isWebContent]);
-
   const getDeviceClass = () => {
     switch (activeDevice) {
       case 'mobile':
