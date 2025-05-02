@@ -10,7 +10,7 @@ interface DevicePreviewProps {
 
 const DevicePreview: React.FC<DevicePreviewProps> = ({ contentHtml, isWebContent = false }) => {
   const [activeDevice, setActiveDevice] = useState('desktop');
-  const [htmlContent, setCssContent, setJsContent] = useState('');
+  const [htmlContent, setHtmlContent] = useState('');
   
   useEffect(() => {
     if (isWebContent) {

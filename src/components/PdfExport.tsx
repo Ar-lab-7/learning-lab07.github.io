@@ -44,7 +44,7 @@ const PdfExport: React.FC<PdfExportProps> = ({
       // Process content
       pdf.setFontSize(12);
       
-      let processedContent;
+      let processedContent = '';
       if (isWebContent) {
         // For HTML content, extract just the text for now
         // This is a simplified approach, ideally we'd parse the HTML properly
