@@ -31,7 +31,7 @@ const CustomQuestionParser: React.FC<CustomQuestionParserProps> = ({ onAddQuesti
           // Question line
           if (trimmedLine.startsWith('Q:') || trimmedLine.match(/^\d+\./)) {
             // Save previous question if exists
-            if (currentQuestion) {
+            if (currentQuestion && currentQuestion.text && currentQuestion.options.length > 0) {
               parsedQuestions.push(currentQuestion);
             }
             
@@ -71,7 +71,7 @@ const CustomQuestionParser: React.FC<CustomQuestionParserProps> = ({ onAddQuesti
                 currentQuestion.options.push(trimmedLine);
                 if (currentQuestion.options.length === 2 && 
                     currentQuestion.options[0].toLowerCase() === 'true' && 
-                    currentQuestion.options[1].toLowerCase() === 'false') {
+                    currentQuestion.options[1].toLowerCase().includes('false')) {
                   currentQuestion.type = 'true-false';
                 }
               }
@@ -80,7 +80,7 @@ const CustomQuestionParser: React.FC<CustomQuestionParserProps> = ({ onAddQuesti
         });
         
         // Add the last question
-        if (currentQuestion && currentQuestion.text) {
+        if (currentQuestion && currentQuestion.text && currentQuestion.options.length > 0) {
           parsedQuestions.push(currentQuestion);
         }
         
@@ -126,7 +126,7 @@ const CustomQuestionParser: React.FC<CustomQuestionParserProps> = ({ onAddQuesti
         <Button 
           type="button" 
           onClick={parseCustomQuestions}
-          className="mt-4"
+          className="mt-4 w-full"
           disabled={isParsing}
         >
           {isParsing ? (

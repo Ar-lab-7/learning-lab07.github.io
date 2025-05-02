@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -8,12 +9,14 @@ import ChatOverlay from '@/components/ChatOverlay';
 import BlogViewer from '@/components/BlogViewer';
 import QuestionPaperGenerator from '@/components/QuestionPaperGenerator';
 import SettingsDialog from '@/components/SettingsDialog';
-import { PlusCircle, MessageCircle, FileText, Settings, BarChart2, User, Edit, Trash2 } from 'lucide-react';
+import QuizGenerator from '@/components/QuizGenerator';
+import { PlusCircle, MessageCircle, FileText, Settings, BarChart2, User, Edit, Trash2, Book, BookPlus, PenLine } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDeviceType } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, Blog } from '@/integrations/supabase/client';
+import { supabase, Blog, Quiz } from '@/integrations/supabase/client';
 import { BlogService } from '@/services/BlogService';
+import { QuizService } from '@/services/QuizService';
 import { TrafficService } from '@/services/TrafficService';
 import {
   DropdownMenu,
@@ -33,6 +36,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 /**
  * Main Index page component
@@ -41,17 +59,21 @@ const Index = () => {
   // State management
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [filteredBlogs, setFilteredBlogs] = useState<Blog[]>([]);
+  const [featuredQuizzes, setFeaturedQuizzes] = useState<Quiz[]>([]);
   const [showBlogCreator, setShowBlogCreator] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [showQuestionPaper, setShowQuestionPaper] = useState(false);
+  const [showQuizCreator, setShowQuizCreator] = useState(false);
   const [selectedBlog, setSelectedBlog] = useState<Blog | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingQuizzes, setIsLoadingQuizzes] = useState(true);
   const [blogToDelete, setBlogToDelete] = useState<string | null>(null);
   const [blogToEdit, setBlogToEdit] = useState<Blog | null>(null);
   const [userLocalBlogs, setUserLocalBlogs] = useState<Blog[]>([]);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState('blogs');
   const { isMobile, isTablet } = useDeviceType();
   const { user, profile, isDeveloper, signOut } = useAuth();
 
@@ -131,6 +153,43 @@ const Index = () => {
     };
   }, []);
 
+  // Load featured quizzes from Supabase
+  useEffect(() => {
+    const fetchFeaturedQuizzes = async () => {
+      setIsLoadingQuizzes(true);
+      try {
+        const quizzes = await QuizService.getFeaturedQuizzes();
+        setFeaturedQuizzes(quizzes);
+      } catch (error) {
+        console.error('Error fetching featured quizzes:', error);
+      } finally {
+        setIsLoadingQuizzes(false);
+      }
+    };
+
+    fetchFeaturedQuizzes();
+
+    // Subscribe to changes in the quizzes table
+    const channel = supabase
+      .channel('public:quizzes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'quizzes',
+        },
+        () => {
+          fetchFeaturedQuizzes();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   // Load user's local blogs
   useEffect(() => {
     if (user && !isDeveloper) {
@@ -150,6 +209,8 @@ const Index = () => {
       setShowChat(true);
     } else if (action === 'questions') {
       setShowQuestionPaper(true);
+    } else if (action === 'quiz') {
+      setShowQuizCreator(true);
     }
     
     // Clean up the URL if we had an action parameter
@@ -290,11 +351,34 @@ const Index = () => {
     }
   };
 
+  const closeQuizCreator = () => {
+    const overlay = document.querySelector('.overlay');
+    if (overlay) {
+      overlay.classList.add('closing');
+      setTimeout(() => {
+        setShowQuizCreator(false);
+      }, 300);
+    } else {
+      setShowQuizCreator(false);
+    }
+  };
+
+  // Handle signing out
   const handleSignOut = async () => {
     try {
       await signOut();
     } catch (error) {
       console.error('Error signing out:', error);
+    }
+  };
+
+  // Format date for display
+  const formatDate = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString();
+    } catch (e) {
+      return dateStr;
     }
   };
 
@@ -334,8 +418,17 @@ const Index = () => {
                 className="bg-accent hover:bg-accent/90 text-white"
                 size={isMobile ? "sm" : "default"}
               >
-                <PlusCircle className="mr-2" size={isMobile ? 16 : 18} />
+                <BookPlus className="mr-2" size={isMobile ? 16 : 18} />
                 Create Blog
+              </Button>
+              
+              <Button 
+                onClick={() => setShowQuizCreator(true)}
+                className="bg-accent hover:bg-accent/90 text-white"
+                size={isMobile ? "sm" : "default"}
+              >
+                <PenLine className="mr-2" size={isMobile ? 16 : 18} />
+                Create Quiz
               </Button>
               
               <Link to="/traffic">
@@ -369,95 +462,168 @@ const Index = () => {
           <div className="flex justify-center">
             <SearchBar onSearch={handleSearch} />
           </div>
+          
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+            <TabsList className="mx-auto">
+              <TabsTrigger value="blogs" className="flex items-center gap-2">
+                <Book size={16} />
+                Blogs
+              </TabsTrigger>
+              <TabsTrigger value="quizzes" className="flex items-center gap-2">
+                <PenLine size={16} />
+                Quizzes
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </header>
         
         <main>
-          {isLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
-            </div>
-          ) : (
-            <>
-              {/* Blogs Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
-                {filteredBlogs.length > 0 ? (
-                  filteredBlogs.map((blog) => (
-                    <div key={blog.id} className="relative group">
-                      <BlogCard
-                        title={blog.title}
-                        date={blog.date}
-                        readTime={blog.readTime || blog.read_time}
-                        imageUrl={blog.imageUrl || blog.image_url}
-                        onClick={() => setSelectedBlog(blog)}
-                      />
-                      
-                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                        <Button 
-                          variant="secondary" 
-                          size="icon" 
-                          className="h-8 w-8 bg-background/80 backdrop-blur-sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setBlogToEdit(blog);
-                            setShowBlogCreator(true);
-                          }}
-                          title="Edit blog"
-                        >
-                          <Edit size={14} />
-                        </Button>
-                        <Button 
-                          variant="destructive" 
-                          size="icon" 
-                          className="h-8 w-8 bg-destructive/80 backdrop-blur-sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setBlogToDelete(blog.id);
-                          }}
-                          title="Delete blog"
-                        >
-                          <Trash2 size={14} />
+          <TabsContent value="blogs" className="mt-0 pt-0">
+            {isLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+              </div>
+            ) : (
+              <>
+                {/* Blogs Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
+                  {filteredBlogs.length > 0 ? (
+                    filteredBlogs.map((blog) => (
+                      <div key={blog.id} className="relative group">
+                        <BlogCard
+                          title={blog.title}
+                          date={blog.date}
+                          readTime={blog.readTime || blog.read_time}
+                          imageUrl={blog.imageUrl || blog.image_url}
+                          onClick={() => setSelectedBlog(blog)}
+                        />
+                        
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                          <Button 
+                            variant="secondary" 
+                            size="icon" 
+                            className="h-8 w-8 bg-background/80 backdrop-blur-sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setBlogToEdit(blog);
+                              setShowBlogCreator(true);
+                            }}
+                            title="Edit blog"
+                          >
+                            <Edit size={14} />
+                          </Button>
+                          <Button 
+                            variant="destructive" 
+                            size="icon" 
+                            className="h-8 w-8 bg-destructive/80 backdrop-blur-sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setBlogToDelete(blog.id);
+                            }}
+                            title="Delete blog"
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    blogs.length === 0 && userLocalBlogs.length === 0 && (
+                      <div className="col-span-full text-center py-12">
+                        <h3 className="text-xl font-medium mb-2 text-app-muted">No blogs found</h3>
+                        <p className="text-app-muted mb-4">
+                          {blogs.length === 0 
+                            ? 'No blogs have been created yet.' 
+                            : 'Create your first blog or try a different search term.'}
+                        </p>
+                        <Button onClick={() => setShowBlogCreator(true)}
+                               className="bg-accent hover:bg-accent/90 text-white">
+                          Create Blog
                         </Button>
                       </div>
+                    )
+                  )}
+                </div>
+                
+                {/* User's Local Blogs */}
+                {userLocalBlogs.length > 0 && (
+                  <div className="mt-10">
+                    <h2 className="text-xl font-bold mb-4 text-app">Your Personal Blogs</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
+                      {userLocalBlogs.map((blog) => (
+                        <BlogCard
+                          key={blog.id}
+                          title={blog.title}
+                          date={blog.date}
+                          readTime={blog.readTime || blog.read_time}
+                          imageUrl={blog.imageUrl || blog.image_url}
+                          onClick={() => setSelectedBlog(blog)}
+                        />
+                      ))}
                     </div>
-                  ))
-                ) : (
-                  blogs.length === 0 && userLocalBlogs.length === 0 && (
-                    <div className="col-span-full text-center py-12">
-                      <h3 className="text-xl font-medium mb-2 text-app-muted">No blogs found</h3>
-                      <p className="text-app-muted mb-4">
-                        {blogs.length === 0 
-                          ? 'No blogs have been created yet.' 
-                          : 'Create your first blog or try a different search term.'}
-                      </p>
-                      <Button onClick={() => setShowBlogCreator(true)}
-                             className="bg-accent hover:bg-accent/90 text-white">
-                        Create Blog
-                      </Button>
-                    </div>
-                  )
+                  </div>
                 )}
+              </>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="quizzes" className="mt-0 pt-0">
+            {isLoadingQuizzes ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
               </div>
-              
-              {/* User's Local Blogs */}
-              {userLocalBlogs.length > 0 && (
-                <div className="mt-10">
-                  <h2 className="text-xl font-bold mb-4 text-app">Your Personal Blogs</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
-                    {userLocalBlogs.map((blog) => (
-                      <BlogCard
-                        key={blog.id}
-                        title={blog.title}
-                        date={blog.date}
-                        readTime={blog.readTime || blog.read_time}
-                        imageUrl={blog.imageUrl || blog.image_url}
-                        onClick={() => setSelectedBlog(blog)}
-                      />
+            ) : (
+              <div className="mt-4">
+                <h2 className="text-xl font-bold mb-6 text-app">Featured Quizzes</h2>
+                
+                {featuredQuizzes.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {featuredQuizzes.map((quiz) => (
+                      <Card key={quiz.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                        <CardHeader className="bg-accent/5 pb-2">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <CardTitle className="text-lg">{quiz.title}</CardTitle>
+                              <CardDescription>
+                                Created {formatDate(quiz.created_at)}
+                              </CardDescription>
+                            </div>
+                            <Badge 
+                              variant={quiz.difficulty === 'easy' ? 'outline' : 
+                                      quiz.difficulty === 'medium' ? 'secondary' : 'default'}
+                            >
+                              {quiz.difficulty.charAt(0).toUpperCase() + quiz.difficulty.slice(1)}
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="pt-4">
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {quiz.questions.length} questions
+                          </p>
+                        </CardContent>
+                        <CardFooter className="bg-background flex justify-between">
+                          <Link to={`/quiz/${quiz.id}`} className="w-full">
+                            <Button size="sm" className="w-full">Take Quiz</Button>
+                          </Link>
+                        </CardFooter>
+                      </Card>
                     ))}
                   </div>
-                </div>
-              )}
-            </>
-          )}
+                ) : (
+                  <div className="text-center py-12">
+                    <h3 className="text-xl font-medium mb-2 text-app-muted">No quizzes available</h3>
+                    <p className="text-app-muted mb-4">
+                      Create your first quiz to get started
+                    </p>
+                    <Button onClick={() => setShowQuizCreator(true)}
+                           className="bg-accent hover:bg-accent/90 text-white">
+                      Create Quiz
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </TabsContent>
         </main>
       </div>
       
@@ -544,6 +710,21 @@ const Index = () => {
             imageUrl: blog.imageUrl || blog.image_url
           }))} 
         />
+      }
+      
+      {showQuizCreator && 
+        <div className="overlay">
+          <div className="overlay-content">
+            <Button 
+              variant="ghost" 
+              className="absolute right-2 top-2 z-50"
+              onClick={closeQuizCreator}
+            >
+              ✕
+            </Button>
+            <QuizGenerator onClose={closeQuizCreator} />
+          </div>
+        </div>
       }
       
       {/* Settings Dialog */}

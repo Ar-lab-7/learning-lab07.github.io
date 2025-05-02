@@ -18,7 +18,7 @@ export const QuizService = {
           expires_at: quizData.expires_at,
           password: quizData.password || null // Ensure null is used instead of undefined
         })
-        .select()
+        .select('*')
         .single();
 
       if (error) {
@@ -29,9 +29,9 @@ export const QuizService = {
 
       toast.success('Quiz created successfully');
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in createQuiz:', error);
-      toast.error('Failed to create quiz');
+      toast.error('Failed to create quiz: ' + (error?.message || 'Unknown error'));
       return null;
     }
   },
@@ -136,8 +136,31 @@ export const QuizService = {
     }
   },
 
+  // Get pinned/featured quizzes
+  getFeaturedQuizzes: async (): Promise<Quiz[]> => {
+    try {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('quizzes')
+        .select('*')
+        .gte('expires_at', now)
+        .order('created_at', { ascending: false })
+        .limit(3);
+        
+      if (error) {
+        console.error('Error fetching featured quizzes:', error);
+        return [];
+      }
+      
+      return data || [];
+    } catch (error) {
+      console.error('Error in getFeaturedQuizzes:', error);
+      return [];
+    }
+  },
+
   // Save a quiz locally (for non-developer users)
-  saveToLocalStorage: (quiz: Omit<Quiz, 'id' | 'created_at' | 'author_id'>) => {
+  saveToLocalStorage: (quiz: Omit<Quiz, 'id' | 'created_at' | 'author_id'>): Quiz | null => {
     try {
       const savedQuizzes = JSON.parse(localStorage.getItem('userQuizzes') || '[]');
       const newQuiz = {
@@ -150,7 +173,7 @@ export const QuizService = {
       localStorage.setItem('userQuizzes', JSON.stringify(savedQuizzes));
       
       toast.success('Quiz saved to local storage');
-      return newQuiz;
+      return newQuiz as Quiz;
     } catch (error) {
       console.error('Error saving to local storage:', error);
       toast.error('Failed to save quiz locally');

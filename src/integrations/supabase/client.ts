@@ -42,20 +42,23 @@ export type Blog = {
 export type Quiz = {
   id: string;
   title: string;
+  description?: string;
   questions: QuizQuestion[];
   difficulty: string;
   created_at: string;
   expires_at: string;
-  password?: string | null; // Updated to allow null
+  password?: string | null;
   author_id?: string;
 };
 
 export type QuizQuestion = {
   id: string;
-  question: string;
-  type: 'mcq' | 'truefalse';
+  text?: string;
+  question?: string;
+  type?: 'mcq' | 'truefalse' | 'multiple-choice' | 'true-false';
   options?: string[];
-  correctAnswer: string | boolean;
+  correctOption?: number;
+  correctAnswer?: string | boolean | number;
   explanation?: string;
 };
 

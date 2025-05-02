@@ -33,53 +33,64 @@ const PdfExport: React.FC<PdfExportProps> = ({
       const tempDiv = document.createElement('div');
       tempDiv.className = 'pdf-export-container';
       
-      // Add styles if includeStyles is true
+      // Add styles with black background and high contrast text
       if (includeStyles) {
         tempDiv.style.fontFamily = 'Arial, sans-serif';
-        tempDiv.style.padding = '20px';
+        tempDiv.style.padding = '40px';
         tempDiv.style.maxWidth = '800px';
         tempDiv.style.margin = '0 auto';
-        tempDiv.style.backgroundColor = 'white';
-        tempDiv.style.color = 'black';
+        tempDiv.style.backgroundColor = '#000000';
+        tempDiv.style.color = '#FFFFFF';
       }
       
       // Add content to the div
       const titleElement = document.createElement('h1');
       titleElement.textContent = title;
       titleElement.style.marginBottom = '20px';
-      titleElement.style.borderBottom = '1px solid #ccc';
+      titleElement.style.borderBottom = '1px solid #444';
       titleElement.style.paddingBottom = '10px';
+      titleElement.style.color = '#FFFFFF';
+      titleElement.style.fontSize = '24px';
+      titleElement.style.fontWeight = 'bold';
       
       tempDiv.appendChild(titleElement);
       
       if (isWebContent) {
         // Handle web content (HTML, CSS, JS)
         try {
-          const htmlMatch = content.match(/<html>([\s\S]*?)<\/html>/);
-          const cssMatch = content.match(/<css>([\s\S]*?)<\/css>/);
-          
-          const htmlContent = htmlMatch ? htmlMatch[1] : '';
-          const cssContent = cssMatch ? cssMatch[1] : '';
-          
-          // Create style element for CSS
-          const styleElement = document.createElement('style');
-          styleElement.textContent = cssContent;
-          tempDiv.appendChild(styleElement);
-          
-          // Add HTML content
+          const parser = new DOMParser();
           const contentDiv = document.createElement('div');
-          contentDiv.innerHTML = htmlContent;
+          
+          // Set the HTML content directly
+          contentDiv.innerHTML = content;
+          
+          // Apply high contrast styles to all text elements
+          const textElements = contentDiv.querySelectorAll('p, h1, h2, h3, h4, h5, h6, span, li, td, th');
+          textElements.forEach(el => {
+            (el as HTMLElement).style.color = '#FFFFFF';
+            (el as HTMLElement).style.opacity = '1';
+          });
+          
           tempDiv.appendChild(contentDiv);
         } catch (error) {
           console.error('Error parsing web content for PDF:', error);
           const errorElement = document.createElement('p');
           errorElement.textContent = 'Error generating PDF from web content.';
+          errorElement.style.color = '#FF5555';
           tempDiv.appendChild(errorElement);
         }
       } else {
-        // Convert markdown-like content to HTML
+        // Convert markdown-like content to HTML with high contrast styling
         const contentElement = document.createElement('div');
         contentElement.innerHTML = renderContent(content);
+        
+        // Apply high contrast styles to all text elements
+        const textElements = contentElement.querySelectorAll('p, h1, h2, h3, h4, h5, h6, span, li');
+        textElements.forEach(el => {
+          (el as HTMLElement).style.color = '#FFFFFF';
+          (el as HTMLElement).style.opacity = '1';
+        });
+        
         tempDiv.appendChild(contentElement);
       }
       
@@ -95,7 +106,7 @@ const PdfExport: React.FC<PdfExportProps> = ({
         // Render the content to canvas
         const canvas = await html2canvas(tempDiv, {
           scale: 2,
-          backgroundColor: 'white',
+          backgroundColor: '#000000',
           logging: false
         });
         
@@ -140,26 +151,26 @@ const PdfExport: React.FC<PdfExportProps> = ({
     }
   };
   
-  // Function to render markdown-like content
+  // Function to render markdown-like content with high contrast styling
   const renderContent = (content: string) => {
     // Replace headings
     let html = content
-      .replace(/^# (.*$)/gm, '<h1 style="font-size: 24px; font-weight: bold; margin-top: 20px; margin-bottom: 10px;">$1</h1>')
-      .replace(/^## (.*$)/gm, '<h2 style="font-size: 20px; font-weight: bold; margin-top: 15px; margin-bottom: 10px;">$1</h2>')
-      .replace(/^### (.*$)/gm, '<h3 style="font-size: 18px; font-weight: bold; margin-top: 10px; margin-bottom: 10px;">$1</h3>');
+      .replace(/^# (.*$)/gm, '<h1 style="font-size: 24px; font-weight: bold; margin-top: 20px; margin-bottom: 10px; color: #FFFFFF;">$1</h1>')
+      .replace(/^## (.*$)/gm, '<h2 style="font-size: 20px; font-weight: bold; margin-top: 15px; margin-bottom: 10px; color: #FFFFFF;">$1</h2>')
+      .replace(/^### (.*$)/gm, '<h3 style="font-size: 18px; font-weight: bold; margin-top: 10px; margin-bottom: 10px; color: #FFFFFF;">$1</h3>');
     
     // Replace bold and italic
     html = html
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>');
+      .replace(/\*\*(.*?)\*\*/g, '<strong style="color: #FFFFFF;">$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em style="color: #FFFFFF;">$1</em>');
     
     // Replace lists
-    html = html.replace(/^- (.*$)/gm, '<li style="margin-left: 20px;">$1</li>');
+    html = html.replace(/^- (.*$)/gm, '<li style="margin-left: 20px; color: #FFFFFF;">$1</li>');
     html = html.replace(/<\/li>\n<li/g, '</li><li');
-    html = html.replace(/(<li.*<\/li>)/gs, '<ul style="margin-top: 10px; margin-bottom: 10px;">$1</ul>');
+    html = html.replace(/(<li.*<\/li>)/gs, '<ul style="margin-top: 10px; margin-bottom: 10px; color: #FFFFFF;">$1</ul>');
     
     // Replace paragraphs
-    html = html.replace(/^(?!<[a-z]).+/gm, '<p style="margin-bottom: 10px;">$&</p>');
+    html = html.replace(/^(?!<[a-z]).+/gm, '<p style="margin-bottom: 10px; color: #FFFFFF;">$&</p>');
     
     // Fix any broken paragraphs
     html = html.replace(/<p><\/p>/g, '');
