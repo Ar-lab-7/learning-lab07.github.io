@@ -97,29 +97,31 @@ const DevicePreview: React.FC<DevicePreviewProps> = ({ contentHtml, isWebContent
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="mobile" className="mt-4">
-          <div className="flex justify-center">
-            <div className={`device-frame border-2 rounded-md overflow-hidden ${getDeviceClass()}`}>
-              {renderContent()}
+        <div className="mt-4">
+          {activeDevice === "mobile" && (
+            <div className="flex justify-center">
+              <div className={`device-frame border-2 rounded-md overflow-hidden ${getDeviceClass()}`}>
+                {renderContent()}
+              </div>
             </div>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="tablet" className="mt-4">
-          <div className="flex justify-center">
-            <div className={`device-frame border-2 rounded-md overflow-hidden ${getDeviceClass()}`}>
-              {renderContent()}
+          )}
+          
+          {activeDevice === "tablet" && (
+            <div className="flex justify-center">
+              <div className={`device-frame border-2 rounded-md overflow-hidden ${getDeviceClass()}`}>
+                {renderContent()}
+              </div>
             </div>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="desktop" className="mt-4">
-          <div className="flex justify-center">
-            <div className={`device-frame border-2 rounded-md overflow-hidden ${getDeviceClass()}`}>
-              {renderContent()}
+          )}
+          
+          {activeDevice === "desktop" && (
+            <div className="flex justify-center">
+              <div className={`device-frame border-2 rounded-md overflow-hidden ${getDeviceClass()}`}>
+                {renderContent()}
+              </div>
             </div>
-          </div>
-        </TabsContent>
+          )}
+        </div>
       </Tabs>
     </div>
   );
