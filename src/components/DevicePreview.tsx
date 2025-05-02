@@ -23,6 +23,62 @@ const DevicePreview: React.FC<DevicePreviewProps> = ({ contentHtml, isWebContent
     }
   };
 
+  // Function to render device content
+  const renderContent = () => {
+    if (isWebContent) {
+      const htmlContent = processWebContent(contentHtml);
+      return (
+        <iframe
+          srcDoc={htmlContent}
+          className="w-full h-full"
+          title="Preview"
+          sandbox="allow-same-origin allow-scripts"
+        />
+      );
+    }
+    
+    return (
+      <div 
+        className="w-full h-full overflow-auto p-4" 
+        dangerouslySetInnerHTML={{ __html: contentHtml }}
+      />
+    );
+  };
+  
+  // Function to process web content
+  const processWebContent = (content: string): string => {
+    try {
+      // Extract HTML, CSS, and JS content from the combined content
+      const htmlMatch = content.match(/<html>([\s\S]*?)<\/html>/) || ['', ''];
+      const cssMatch = content.match(/<css>([\s\S]*?)<\/css>/) || ['', ''];
+      const jsMatch = content.match(/<javascript>([\s\S]*?)<\/javascript>/) || ['', ''];
+      
+      // Create a complete HTML document with the extracted parts
+      return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>${cssMatch[1]}</style>
+        </head>
+        <body>
+          ${htmlMatch[1] || content}
+          <script>${jsMatch[1]}</script>
+        </body>
+        </html>
+      `;
+    } catch (error) {
+      console.error('Error processing web content:', error);
+      return `
+        <!DOCTYPE html>
+        <html>
+        <body>
+          <p>Error processing content</p>
+        </body>
+        </html>
+      `;
+    }
+  };
+
   return (
     <div className="w-full">
       <Tabs value={activeDevice} onValueChange={setActiveDevice} className="mb-4">
@@ -67,60 +123,6 @@ const DevicePreview: React.FC<DevicePreviewProps> = ({ contentHtml, isWebContent
       </Tabs>
     </div>
   );
-  
-  function renderContent() {
-    if (isWebContent) {
-      const htmlContent = processWebContent(contentHtml);
-      return (
-        <iframe
-          srcDoc={htmlContent}
-          className="w-full h-full"
-          title="Preview"
-          sandbox="allow-same-origin allow-scripts"
-        />
-      );
-    }
-    
-    return (
-      <div 
-        className="w-full h-full overflow-auto p-4" 
-        dangerouslySetInnerHTML={{ __html: contentHtml }}
-      />
-    );
-  }
-  
-  function processWebContent(content: string): string {
-    try {
-      // Extract HTML, CSS, and JS content from the combined content
-      const htmlMatch = content.match(/<html>([\s\S]*?)<\/html>/) || ['', ''];
-      const cssMatch = content.match(/<css>([\s\S]*?)<\/css>/) || ['', ''];
-      const jsMatch = content.match(/<javascript>([\s\S]*?)<\/javascript>/) || ['', ''];
-      
-      // Create a complete HTML document with the extracted parts
-      return `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>${cssMatch[1]}</style>
-        </head>
-        <body>
-          ${htmlMatch[1] || content}
-          <script>${jsMatch[1]}</script>
-        </body>
-        </html>
-      `;
-    } catch (error) {
-      console.error('Error processing web content:', error);
-      return `
-        <!DOCTYPE html>
-        <html>
-        <body>
-          <p>Error processing content</p>
-        </body>
-        </html>
-      `;
-    }
-  }
 };
 
 export default DevicePreview;
