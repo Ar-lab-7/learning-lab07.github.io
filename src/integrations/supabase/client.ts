@@ -2,11 +2,17 @@
 import { createClient } from "@supabase/supabase-js";
 
 // Supabase configuration
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY || '';
+// Using hardcoded values for the Lovable preview since env variables might not be properly loaded
+const SUPABASE_URL = "https://bolmkvtrtrnvofpwkqnt.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvbG1rdnRydHJudm9mcHdrcW50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2NzM0NTksImV4cCI6MjA1OTI0OTQ1OX0.Ef24eDi6anULVy797mfFFro6neCRolrNZ528-J6hv3E";
 
 // Initialize Supabase client
-export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+  }
+});
 
 // Types
 export interface User {
@@ -14,6 +20,12 @@ export interface User {
   email: string;
   role?: string;
   avatar_url?: string;
+}
+
+export interface UserProfile {
+  id: string;
+  username: string;
+  is_developer: boolean;
 }
 
 export interface Blog {
@@ -37,7 +49,7 @@ export interface QuizQuestion {
   options: string[];
   correctAnswer: string;
   explanation?: string;
-  type?: 'multiple-choice' | 'true-false';
+  type?: 'mcq' | 'truefalse'; // Updated to match the actual usage in components
 }
 
 export interface Quiz {
@@ -49,8 +61,10 @@ export interface Quiz {
   created_at?: string;
   updated_at?: string;
   user_id?: string;
-  time_limit?: number; // Added this property
-  passing_score?: number; // Added this property
+  time_limit?: number;
+  passing_score?: number;
+  difficulty?: string; // Added missing property used in components
+  expires_at?: string; // Added missing property used in components
 }
 
 export interface Pageview {

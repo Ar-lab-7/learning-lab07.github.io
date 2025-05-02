@@ -47,14 +47,13 @@ const PdfExport: React.FC<PdfExportProps> = ({
       let processedContent = '';
       if (isWebContent) {
         // For HTML content, extract just the text for now
-        // This is a simplified approach, ideally we'd parse the HTML properly
         const strippedHtml = content.replace(/<[^>]+>/g, '\n');
         processedContent = strippedHtml;
       } else {
         // For markdown, convert to plain text
         const html = marked.parse(content);
         const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = html;
+        tempDiv.innerHTML = html as string; // Fix: Cast to string explicitly
         processedContent = tempDiv.textContent || tempDiv.innerText || '';
       }
       
