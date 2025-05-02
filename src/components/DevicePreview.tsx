@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Smartphone, Tablet, Laptop } from 'lucide-react';
 
 interface DevicePreviewProps {
@@ -79,6 +79,17 @@ const DevicePreview: React.FC<DevicePreviewProps> = ({ contentHtml, isWebContent
     );
   };
 
+  // Render the appropriate device frame based on activeDevice
+  const renderDeviceFrame = () => {
+    return (
+      <div className="flex justify-center">
+        <div className={`device-frame border-2 rounded-md overflow-hidden ${getDeviceClass()}`}>
+          {renderContent()}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="w-full">
       <Tabs value={activeDevice} onValueChange={setActiveDevice} className="mb-4">
@@ -96,33 +107,11 @@ const DevicePreview: React.FC<DevicePreviewProps> = ({ contentHtml, isWebContent
             Desktop
           </TabsTrigger>
         </TabsList>
-        
-        <div className="mt-4">
-          {activeDevice === "mobile" && (
-            <div className="flex justify-center">
-              <div className={`device-frame border-2 rounded-md overflow-hidden ${getDeviceClass()}`}>
-                {renderContent()}
-              </div>
-            </div>
-          )}
-          
-          {activeDevice === "tablet" && (
-            <div className="flex justify-center">
-              <div className={`device-frame border-2 rounded-md overflow-hidden ${getDeviceClass()}`}>
-                {renderContent()}
-              </div>
-            </div>
-          )}
-          
-          {activeDevice === "desktop" && (
-            <div className="flex justify-center">
-              <div className={`device-frame border-2 rounded-md overflow-hidden ${getDeviceClass()}`}>
-                {renderContent()}
-              </div>
-            </div>
-          )}
-        </div>
       </Tabs>
+      
+      <div className="mt-4">
+        {renderDeviceFrame()}
+      </div>
     </div>
   );
 };
