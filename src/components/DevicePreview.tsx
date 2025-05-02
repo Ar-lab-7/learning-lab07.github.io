@@ -23,28 +23,6 @@ const DevicePreview: React.FC<DevicePreviewProps> = ({ contentHtml, isWebContent
     }
   };
 
-  // Function to render device content
-  const renderContent = () => {
-    if (isWebContent) {
-      const htmlContent = processWebContent(contentHtml);
-      return (
-        <iframe
-          srcDoc={htmlContent}
-          className="w-full h-full"
-          title="Preview"
-          sandbox="allow-same-origin allow-scripts"
-        />
-      );
-    }
-    
-    return (
-      <div 
-        className="w-full h-full overflow-auto p-4" 
-        dangerouslySetInnerHTML={{ __html: contentHtml }}
-      />
-    );
-  };
-  
   // Function to process web content
   const processWebContent = (content: string): string => {
     try {
@@ -77,6 +55,28 @@ const DevicePreview: React.FC<DevicePreviewProps> = ({ contentHtml, isWebContent
         </html>
       `;
     }
+  };
+
+  // Function to render device content
+  const renderContent = () => {
+    if (isWebContent) {
+      const htmlContent = processWebContent(contentHtml);
+      return (
+        <iframe
+          srcDoc={htmlContent}
+          className="w-full h-full"
+          title="Preview"
+          sandbox="allow-same-origin allow-scripts"
+        />
+      );
+    }
+    
+    return (
+      <div 
+        className="w-full h-full overflow-auto p-4" 
+        dangerouslySetInnerHTML={{ __html: contentHtml }}
+      />
+    );
   };
 
   return (
