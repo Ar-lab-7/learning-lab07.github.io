@@ -302,6 +302,66 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
     toast.success('Code copied to clipboard!');
   };
 
+  const renderTabContent = () => {
+    switch(activeTab) {
+      case 'write':
+        return (
+          <>
+            {editorMode === 'markdown' && <BlogEditorUtils onFormatInsert={insertFormatting} content={content} />}
+            
+            {editorMode === 'markdown' ? (
+              <textarea
+                id="content-area"
+                ref={textAreaRef}
+                className="content-area w-full mt-4"
+                rows={15}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Start writing your blog content here..."
+              />
+            ) : (
+              <div className="mt-4">
+                <CodeEditor
+                  value={content}
+                  onChange={setContent}
+                  height="400px"
+                  isWebEditor={true}
+                  singleFileMode={singleFileMode}
+                />
+              </div>
+            )}
+          </>
+        );
+        
+      case 'preview-device':
+        return <DevicePreview contentHtml={previewHtml} isWebContent={editorMode === 'code'} />;
+        
+      case 'preview-code':
+        return (
+          <div className="bg-secondary/60 p-4 rounded-lg">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-lg font-medium">Generated Blog Code</h3>
+              <div className="flex gap-2">
+                <Button onClick={copyToClipboard} variant="secondary" size="sm">Copy Code</Button>
+                <PdfExport
+                  content={content}
+                  title={title}
+                  fileName={`${title.replace(/\s+/g, '-').toLowerCase()}.pdf`}
+                  isWebContent={editorMode === 'code'}
+                />
+              </div>
+            </div>
+            <pre className="whitespace-pre-wrap text-sm overflow-x-auto p-4 bg-black/30 rounded border border-eduAccent/20">
+              {generatedCode || 'Generate code first using the button below'}
+            </pre>
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="container max-w-5xl mx-auto my-8 p-6 glass rounded-lg animate-fade-in" onClick={(e) => e.stopPropagation()}>
@@ -408,54 +468,16 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
             <TabsTrigger value="preview-code">Generated Code</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="write" className="mt-4">
-            {editorMode === 'markdown' && <BlogEditorUtils onFormatInsert={insertFormatting} content={content} />}
-            
-            {editorMode === 'markdown' ? (
-              <textarea
-                id="content-area"
-                ref={textAreaRef}
-                className="content-area w-full mt-4"
-                rows={15}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Start writing your blog content here..."
-              />
-            ) : (
-              <div className="mt-4">
-                <CodeEditor
-                  value={content}
-                  onChange={setContent}
-                  height="400px"
-                  isWebEditor={true}
-                  singleFileMode={singleFileMode}
-                />
-              </div>
-            )}
+          <TabsContent value="write">
+            {renderTabContent()}
           </TabsContent>
           
-          <TabsContent value="preview-device" className="mt-4">
-            <DevicePreview contentHtml={previewHtml} isWebContent={editorMode === 'code'} />
+          <TabsContent value="preview-device">
+            {renderTabContent()}
           </TabsContent>
           
-          <TabsContent value="preview-code" className="mt-4">
-            <div className="bg-secondary/60 p-4 rounded-lg">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-medium">Generated Blog Code</h3>
-                <div className="flex gap-2">
-                  <Button onClick={copyToClipboard} variant="secondary" size="sm">Copy Code</Button>
-                  <PdfExport
-                    content={content}
-                    title={title}
-                    fileName={`${title.replace(/\s+/g, '-').toLowerCase()}.pdf`}
-                    isWebContent={editorMode === 'code'}
-                  />
-                </div>
-              </div>
-              <pre className="whitespace-pre-wrap text-sm overflow-x-auto p-4 bg-black/30 rounded border border-eduAccent/20">
-                {generatedCode || 'Generate code first using the button below'}
-              </pre>
-            </div>
+          <TabsContent value="preview-code">
+            {renderTabContent()}
           </TabsContent>
         </Tabs>
         
