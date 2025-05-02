@@ -201,6 +201,129 @@ const QuizTakePage = () => {
     return null;
   }
 
+  // Render content based on active tab
+  const renderTabContent = () => {
+    if (activeTab === 'questions') {
+      return (
+        <div className="space-y-6">
+          {quiz.questions.map((question: QuizQuestion, index: number) => (
+            <div key={question.id} className="p-4 border rounded-md">
+              <h3 className="font-medium mb-3">
+                {index + 1}. {question.question}
+              </h3>
+              
+              <RadioGroup 
+                value={answers[question.id] || ''} 
+                onValueChange={(value) => handleAnswerChange(question.id, value)}
+                className="space-y-2"
+              >
+                {question.options.map((option: string, optionIndex: number) => (
+                  <div key={optionIndex} className="flex items-center space-x-2">
+                    <RadioGroupItem value={option} id={`${question.id}-${optionIndex}`} />
+                    <Label htmlFor={`${question.id}-${optionIndex}`}>{option}</Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+          ))}
+          
+          <div className="flex justify-end mt-6">
+            <Button 
+              onClick={handleSubmit} 
+              disabled={isSubmitting || Object.keys(answers).length === 0} 
+              className="px-6"
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Answers'}
+            </Button>
+          </div>
+        </div>
+      );
+    } else if (activeTab === 'results') {
+      return (
+        <div>
+          <div className="mb-6 text-center">
+            <div className="text-3xl font-bold mb-1">Your Score: {score}%</div>
+            <div className="text-muted-foreground">
+              {score >= (quiz.passing_score || 70) ? 'You passed!' : 'You didn\'t pass. Try again!'}
+            </div>
+          </div>
+          
+          <div className="space-y-6">
+            {quiz.questions.map((question: QuizQuestion, index: number) => {
+              const status = getAnswerStatus(question);
+              
+              return (
+                <div 
+                  key={question.id} 
+                  className={`p-4 border rounded-md ${
+                    status === 'correct' 
+                      ? 'bg-green-50 border-green-200' 
+                      : status === 'incorrect' 
+                        ? 'bg-red-50 border-red-200' 
+                        : ''
+                  }`}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <h3 className="font-medium">
+                      {index + 1}. {question.question}
+                    </h3>
+                    {status === 'correct' && (
+                      <CheckCircle className="text-green-500 h-5 w-5 mt-1" />
+                    )}
+                    {status === 'incorrect' && (
+                      <AlertCircle className="text-red-500 h-5 w-5 mt-1" />
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2 mb-3">
+                    {question.options.map((option: string, optionIndex: number) => (
+                      <div 
+                        key={optionIndex} 
+                        className={`p-2 rounded ${
+                          option === question.correctAnswer 
+                            ? 'bg-green-100 border border-green-200' 
+                            : option === answers[question.id] && option !== question.correctAnswer
+                              ? 'bg-red-100 border border-red-200'
+                              : 'bg-background'
+                        }`}
+                      >
+                        {option}
+                        {option === question.correctAnswer && (
+                          <span className="ml-2 text-green-600 text-sm">(Correct Answer)</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {question.explanation && (
+                    <div className="bg-muted p-3 rounded-md mt-2 text-sm">
+                      <strong>Explanation:</strong> {question.explanation}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          
+          <div className="flex justify-between mt-6">
+            <Button variant="outline" onClick={() => navigate('/')}>
+              Return to Home
+            </Button>
+            <Button onClick={() => {
+              setAnswers({});
+              setShowResults(false);
+              setActiveTab('questions');
+            }}>
+              Try Again
+            </Button>
+          </div>
+        </div>
+      );
+    }
+    
+    return null;
+  };
+
   return (
     <div className="container mx-auto px-4 py-6">
       <Button variant="outline" size="sm" onClick={() => navigate('/')} className="mb-4">
@@ -234,117 +357,7 @@ const QuizTakePage = () => {
           </TabsList>
           
           <CardContent>
-            <TabsContent value="questions" className="space-y-6">
-              {quiz.questions.map((question: QuizQuestion, index: number) => (
-                <div key={question.id} className="p-4 border rounded-md">
-                  <h3 className="font-medium mb-3">
-                    {index + 1}. {question.question}
-                  </h3>
-                  
-                  <RadioGroup 
-                    value={answers[question.id] || ''} 
-                    onValueChange={(value) => handleAnswerChange(question.id, value)}
-                    className="space-y-2"
-                  >
-                    {question.options.map((option: string, optionIndex: number) => (
-                      <div key={optionIndex} className="flex items-center space-x-2">
-                        <RadioGroupItem value={option} id={`${question.id}-${optionIndex}`} />
-                        <Label htmlFor={`${question.id}-${optionIndex}`}>{option}</Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </div>
-              ))}
-              
-              <div className="flex justify-end mt-6">
-                <Button 
-                  onClick={handleSubmit} 
-                  disabled={isSubmitting || Object.keys(answers).length === 0} 
-                  className="px-6"
-                >
-                  {isSubmitting ? 'Submitting...' : 'Submit Answers'}
-                </Button>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="results">
-              <div className="mb-6 text-center">
-                <div className="text-3xl font-bold mb-1">Your Score: {score}%</div>
-                <div className="text-muted-foreground">
-                  {score >= (quiz.passing_score || 70) ? 'You passed!' : 'You didn\'t pass. Try again!'}
-                </div>
-              </div>
-              
-              <div className="space-y-6">
-                {quiz.questions.map((question: QuizQuestion, index: number) => {
-                  const status = getAnswerStatus(question);
-                  
-                  return (
-                    <div 
-                      key={question.id} 
-                      className={`p-4 border rounded-md ${
-                        status === 'correct' 
-                          ? 'bg-green-50 border-green-200' 
-                          : status === 'incorrect' 
-                            ? 'bg-red-50 border-red-200' 
-                            : ''
-                      }`}
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <h3 className="font-medium">
-                          {index + 1}. {question.question}
-                        </h3>
-                        {status === 'correct' && (
-                          <CheckCircle className="text-green-500 h-5 w-5 mt-1" />
-                        )}
-                        {status === 'incorrect' && (
-                          <AlertCircle className="text-red-500 h-5 w-5 mt-1" />
-                        )}
-                      </div>
-                      
-                      <div className="space-y-2 mb-3">
-                        {question.options.map((option: string, optionIndex: number) => (
-                          <div 
-                            key={optionIndex} 
-                            className={`p-2 rounded ${
-                              option === question.correctAnswer 
-                                ? 'bg-green-100 border border-green-200' 
-                                : option === answers[question.id] && option !== question.correctAnswer
-                                  ? 'bg-red-100 border border-red-200'
-                                  : 'bg-background'
-                            }`}
-                          >
-                            {option}
-                            {option === question.correctAnswer && (
-                              <span className="ml-2 text-green-600 text-sm">(Correct Answer)</span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                      
-                      {question.explanation && (
-                        <div className="bg-muted p-3 rounded-md mt-2 text-sm">
-                          <strong>Explanation:</strong> {question.explanation}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              
-              <div className="flex justify-between mt-6">
-                <Button variant="outline" onClick={() => navigate('/')}>
-                  Return to Home
-                </Button>
-                <Button onClick={() => {
-                  setAnswers({});
-                  setShowResults(false);
-                  setActiveTab('questions');
-                }}>
-                  Try Again
-                </Button>
-              </div>
-            </TabsContent>
+            {renderTabContent()}
           </CardContent>
         </Tabs>
       </Card>

@@ -30,6 +30,7 @@ const BlogViewer: React.FC<BlogViewerProps> = ({ blog, onClose }) => {
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(!blog.password);
   const [errorMessage, setErrorMessage] = useState('');
+  const [activeView, setActiveView] = useState('content');
   
   useEffect(() => {
     document.body.style.overflow = 'hidden';
