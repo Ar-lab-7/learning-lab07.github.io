@@ -42,9 +42,11 @@ export const BlogService = {
         date: blogData.date,
         read_time: blogData.readTime || blogData.read_time,
         image_url: blogData.imageUrl || blogData.image_url,
-        subject: blogData.subject,
-        password: blogData.password
+        subject: blogData.subject || null,
+        password: blogData.password || null
       };
+
+      console.log('Creating blog with data:', dbBlogData);
 
       const { data, error } = await supabase
         .from('blogs')
@@ -62,7 +64,8 @@ export const BlogService = {
       const responseBlog: Blog = {
         ...data,
         readTime: data.read_time,
-        imageUrl: data.image_url
+        imageUrl: data.image_url,
+        subject: data.subject
       };
 
       toast.success('Blog created successfully');
@@ -91,6 +94,8 @@ export const BlogService = {
         dbUpdateData.image_url = blogData.imageUrl;
         delete dbUpdateData.imageUrl;
       }
+
+      console.log('Updating blog with data:', dbUpdateData);
 
       const { data, error } = await supabase
         .from('blogs')
@@ -179,8 +184,8 @@ export const BlogService = {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         read_time: blog.readTime || blog.read_time, // Make sure read_time is set
-        subject: blog.subject,
-        password: blog.password
+        subject: blog.subject || null,
+        password: blog.password || null
       };
       
       savedBlogs.push(newBlog);
@@ -203,8 +208,8 @@ export const BlogService = {
         ...blog,
         readTime: blog.readTime || blog.read_time,
         imageUrl: blog.imageUrl || blog.image_url,
-        subject: blog.subject,
-        password: blog.password
+        subject: blog.subject || null,
+        password: blog.password || null
       }));
     } catch (error) {
       console.error('Error getting blogs from local storage:', error);

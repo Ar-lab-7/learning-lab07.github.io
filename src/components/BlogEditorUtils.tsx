@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BlogEditorTable from './BlogEditorTable';
-import { Bold, Italic, List, Image, Link, Heading, Check, Type, AlignLeft, Table, FileText, Quote, ListOrdered, Code } from 'lucide-react';
+import { Bold, Italic, List, Image, Link, Heading, Check, Type, Quote, ListOrdered, Code } from 'lucide-react';
 
 interface BlogEditorUtilsProps {
   onFormatInsert: (format: string, customContent?: string) => void;
@@ -33,7 +33,7 @@ const BlogEditorUtils: React.FC<BlogEditorUtilsProps> = ({ onFormatInsert, conte
     { id: 'elements', label: 'Elements', items: [
       { id: 'image', icon: <Image size={18} />, title: 'Image' },
       { id: 'link', icon: <Link size={18} />, title: 'Link' },
-      { id: 'table', icon: <Table size={18} />, title: 'Table', action: () => setShowTableCreator(true) },
+      { id: 'table', icon: <Link size={18} />, title: 'Table', action: () => setShowTableCreator(true) },
       { id: 'code', icon: <Code size={18} />, title: 'Code Block' },
       { id: 'fillblank', icon: <Type size={18} />, title: 'Fill in blank' },
     ]},

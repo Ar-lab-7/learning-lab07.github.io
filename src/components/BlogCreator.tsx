@@ -14,6 +14,8 @@ import CodeEditor from './CodeEditor';
 import PdfExport from './PdfExport';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Blog } from '@/integrations/supabase/client';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface BlogCreatorProps {
   onClose: () => void;
@@ -42,6 +44,7 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
   const [imageUrl, setImageUrl] = useState('');
   const [previewHtml, setPreviewHtml] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [singleFileMode, setSingleFileMode] = useState(true);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   
   useEffect(() => {
@@ -384,6 +387,20 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
           </div>
         </div>
         
+        {editorMode === 'code' && (
+          <div className="flex items-center gap-2 mb-4">
+            <Label htmlFor="singleFileMode">Single File Editor Mode</Label>
+            <Switch
+              id="singleFileMode"
+              checked={singleFileMode}
+              onCheckedChange={setSingleFileMode}
+            />
+            <span className="text-xs text-muted-foreground ml-auto">
+              {singleFileMode ? 'All code in one file' : 'Tabbed editing'}
+            </span>
+          </div>
+        )}
+        
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="write">Write</TabsTrigger>
@@ -411,6 +428,7 @@ const BlogCreator: React.FC<BlogCreatorProps> = ({ onClose, onSave, blogToEdit, 
                   onChange={setContent}
                   height="400px"
                   isWebEditor={true}
+                  singleFileMode={singleFileMode}
                 />
               </div>
             )}

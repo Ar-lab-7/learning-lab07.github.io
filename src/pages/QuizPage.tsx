@@ -16,6 +16,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { CalendarIcon, Timer, AlertCircle, Lock, ArrowRight } from 'lucide-react';
 import { format, formatDistanceToNow, isPast } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 const QuizPage = () => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -44,6 +45,7 @@ const QuizPage = () => {
       setQuizzes(combinedQuizzes);
     } catch (error) {
       console.error('Error fetching quizzes:', error);
+      toast.error('Failed to load quizzes');
     } finally {
       setLoading(false);
     }

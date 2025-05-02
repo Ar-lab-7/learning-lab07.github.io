@@ -18,6 +18,7 @@ export type Database = {
           id: string
           image_url: string | null
           read_time: string
+          subject: string | null
           title: string
           updated_at: string | null
         }
@@ -29,6 +30,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           read_time: string
+          subject?: string | null
           title: string
           updated_at?: string | null
         }
@@ -40,6 +42,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           read_time?: string
+          subject?: string | null
           title?: string
           updated_at?: string | null
         }
@@ -119,6 +122,39 @@ export type Database = {
         }
         Relationships: []
       }
+      quizzes: {
+        Row: {
+          author_id: string | null
+          created_at: string
+          difficulty: string
+          expires_at: string
+          id: string
+          password: string | null
+          questions: Json
+          title: string
+        }
+        Insert: {
+          author_id?: string | null
+          created_at?: string
+          difficulty: string
+          expires_at: string
+          id?: string
+          password?: string | null
+          questions: Json
+          title: string
+        }
+        Update: {
+          author_id?: string | null
+          created_at?: string
+          difficulty?: string
+          expires_at?: string
+          id?: string
+          password?: string | null
+          questions?: Json
+          title?: string
+        }
+        Relationships: []
+      }
       websites: {
         Row: {
           created_at: string
@@ -152,13 +188,19 @@ export type Database = {
     }
     Functions: {
       record_pageview: {
-        Args: {
-          site_id: string
-          page_url: string
-          referrer: string
-          user_agent: string
-        }
-        Returns: string
+        Args:
+          | Record<PropertyKey, never>
+          | {
+              site_id: string
+              page_url: string
+              referrer: string
+              user_agent: string
+            }
+        Returns: undefined
+      }
+      set_blog_author_id: {
+        Args: { author_id: number; blog_id: number }
+        Returns: undefined
       }
     }
     Enums: {
